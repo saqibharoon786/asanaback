@@ -1,7 +1,11 @@
-const BrokenLink = require("./brokenLinks.model");
+const User = require("./user.model");
+const Department = require("./department.model");
+const Project = require("./project.model");
 
 const companyModel = {
-  BrokenLink,
+  User,
+  Department,
+  Project,
 };
 
 module.exports = companyModel;

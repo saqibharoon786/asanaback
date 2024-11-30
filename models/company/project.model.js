@@ -1,15 +1,26 @@
-// const mongoose = require("mongoose");
+const mongoose = require("mongoose");
 
-// const projectSchema = new mongoose.Schema(
-//   {
-//     projectName: { type: String, required: true },
-//     email: { type: String, unique: true, required: true },
-//   },
-//   {
-//     timestamps: true,
-//   }
-// );
+const projectSchema = new mongoose.Schema(
+  {
+    project_Name: {
+      type: String,
+    },
+    project_Department: {
+      type: String,
+    },
+    project_Employees: [
+      {
+        employee_Name: { type: String },
+        employee_Role: { type: String },
+        employee_Email: { type: String },
+      },
+    ],
+  },
+  {
+    timestamps: true,
+  }
+);
 
-// const Project = mongoose.model("Project", projectSchema);
+const Projects = mongoose.model("Projects", projectSchema);
 
-// module.exports = Project;
+module.exports = Projects;

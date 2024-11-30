@@ -2,7 +2,7 @@
 const mongoose = require("mongoose");
 
 // Replace with your MongoDB connection string
-const dbURI = "mongodb://127.0.0.1:27017/TTechAuditDB";
+const dbURI = "mongodb://127.0.0.1:27017/TTechCRM";
 
 const connectDB = async () => {
   try {
