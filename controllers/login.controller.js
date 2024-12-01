@@ -8,10 +8,10 @@ const SECRET = "1234";
 
 const loggingIn = async (req, res) => {
   try {
-    const { employee_Email, employee_Password } = req.body;
+    const { email, password } = req.body;
 
     // Check for required fields
-    if (!employee_Email || !employee_Password) {
+    if (!email || !password) {
       return res.status(400).json({
         success: false,
         status: 400,
@@ -20,7 +20,7 @@ const loggingIn = async (req, res) => {
     }
 
     const emailSchema = joi.string().email().required();
-    const { error } = emailSchema.validate(employee_Email); // Validate the email
+    const { error } = emailSchema.validate(email); // Validate the email
 
     if (error) {
       return res.status(422).json({
@@ -30,7 +30,7 @@ const loggingIn = async (req, res) => {
       });
     }
 
-    const employee = await companyModel.Employee.findOne({ employee_Email });
+    const employee = await companyModel.User.findOne({ email });
 
     if (!employee) {
       return res.status(401).json({
@@ -40,10 +40,7 @@ const loggingIn = async (req, res) => {
       });
     }
 
-    const validPassword = await bcrypt.compare(
-      employee_Password,
-      employee.employee_Password
-    );
+    const validPassword = await bcrypt.compare(password, employee.password);
 
     if (!validPassword) {
       return res.status(400).json({
@@ -54,7 +51,7 @@ const loggingIn = async (req, res) => {
     }
 
     // Generate JWT
-    const jwtLoginToken = jwt.sign({ employee_Email }, SECRET, {
+    const jwtLoginToken = jwt.sign({ email }, SECRET, {
       expiresIn: "7d",
     });
 
@@ -63,11 +60,7 @@ const loggingIn = async (req, res) => {
       status: 200,
       message: "User login successful",
       information: {
-        employee: {
-          name: employee.employee_Name,
-          email: employee.employee_Email,
-          role: employee.employee_role,
-        },
+        user: employee,
         jwtLoginToken: jwtLoginToken,
       },
     });

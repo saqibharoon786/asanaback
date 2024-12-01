@@ -39,8 +39,6 @@ const signUp = async (req, res) => {
       admin: true,
     });
 
-    // return res.send("here");
-
     // Return a success message with the necessary user details
     return res.status(200).json({
       success: true,
