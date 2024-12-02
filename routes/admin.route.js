@@ -23,21 +23,22 @@ router.post(
 router.post(
   "/add-employee",
   upload.single("employee_Image"),
-  //   // passport.authenticate("jwt", { session: false }),
-  //   // middleware.roleAdminCheck
+  // passport.authenticate("jwt", { session: false }),
+  // middleware.roleAdminCheck
   controller.admin.addEmployee
 );
 
 router.get(
   "/get-employees",
-  //   // passport.authenticate("jwt", { session: false }),
-  //   // middleware.roleAdminCheck
+  // passport.authenticate("jwt", { session: false }),
+  // middleware.roleAdminCheck
   controller.admin.getEmployees
 );
 router.get(
   "/get-departments",
-  //   // passport.authenticate("jwt", { session: false }),
-  //   // middleware.roleAdminCheck
+  // passport.authenticate("jwt", { session: false }),
+  // middleware.roleAdminCheck
   controller.admin.getDepartments
 );
+
 module.exports = router;

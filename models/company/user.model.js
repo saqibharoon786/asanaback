@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema(
     image: { type: Object },
     contact: { type: String },
     address: { type: String },
-    admin: { type: Boolean },
+    admin: { type: Boolean, default: false },
   },
   {
     timestamps: true,

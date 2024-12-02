@@ -10,9 +10,8 @@ const projectSchema = new mongoose.Schema(
     },
     project_Employees: [
       {
-        employee_Name: { type: String },
+        employee_Id: { type: String },
         employee_Role: { type: String },
-        employee_Email: { type: String },
       },
     ],
   },

@@ -102,24 +102,20 @@ const addEmployee = async (req, res) => {
       imageBase64: req.file.buffer.toString("base64"),
     };
 
-    department.department_Employees.push({
-      employee_Name,
-      employee_Email,
-      employee_Password: hashedPassword,
-      employee_Role,
-      employee_Contact,
-      employee_Address,
-      employee_Image,
-    });
-
     const newUser = await companyModel.User.create({
       name: employee_Name,
       email: employee_Email,
-      password: employee_Password,
+      password: hashedPassword,
       contact: employee_Contact,
       address: employee_Address,
       image: employee_Image,
     });
+
+    department.department_Employees.push({
+      employee_Id: newUser._id,
+      employee_Role,
+    });
+
     await department.save();
 
     return res.status(201).json({

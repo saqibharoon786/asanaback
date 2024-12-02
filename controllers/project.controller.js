@@ -1,5 +1,5 @@
 const express = require("express");
-const projectModel = require("../models/company/companyIndex.model");
+const companyModel = require("../models/company/companyIndex.model");
 
 const addProject = async (req, res) => {
   try {
@@ -14,7 +14,7 @@ const addProject = async (req, res) => {
       });
     }
 
-    const existingProject = await projectModel.Project.findOne({
+    const existingProject = await companyModel.Project.findOne({
       project_Name,
     });
 
@@ -26,7 +26,7 @@ const addProject = async (req, res) => {
       });
     }
 
-    const existingDepartment = await projectModel.Department.findOne({
+    const existingDepartment = await companyModel.Department.findOne({
       department_Name: project_Department,
     });
 
@@ -38,7 +38,7 @@ const addProject = async (req, res) => {
       });
     }
 
-    const newProject = await projectModel.Project.create({
+    const newProject = await companyModel.Project.create({
       project_Name,
       project_Department,
     });
@@ -76,7 +76,7 @@ const addProjectEmployee = async (req, res) => {
     }
 
     // Find the project by name
-    const project = await projectModel.Project.findOne({
+    const project = await companyModel.Project.findOne({
       project_Name,
     });
 
@@ -88,12 +88,21 @@ const addProjectEmployee = async (req, res) => {
       });
     }
 
+    const employee = await companyModel.User.findOne({ email: employee_Email });
+    if (!employee) {
+      return res.status(404).json({
+        success: false,
+        status: 404,
+        message: "Register employee in department first",
+      });
+    }
+
     // Check if the employee is already assigned to the project
-    const existingEmployee = project.project_Employees.find(
+    const existingEmployeeInProject = project.project_Employees.find(
       (emp) => emp.employee_Email === employee_Email
     );
 
-    if (existingEmployee) {
+    if (existingEmployeeInProject) {
       return res.status(400).json({
         success: false,
         status: 400,
@@ -103,9 +112,8 @@ const addProjectEmployee = async (req, res) => {
 
     // Add the employee to the project's employee list
     project.project_Employees.push({
-      employee_Name,
+      employee_id: employee._id,
       employee_Role,
-      employee_Email,
     });
 
     await project.save();
@@ -129,7 +137,7 @@ const addProjectEmployee = async (req, res) => {
 const getAllProjects = async (req, res) => {
   try {
     // Fetch all projects, including the embedded 'project_Employees' field
-    const projects = await projectModel.Project.find();
+    const projects = await companyModel.Project.find();
 
     if (!projects || projects.length === 0) {
       return res.status(404).json({
