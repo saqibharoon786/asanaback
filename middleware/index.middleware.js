@@ -1,9 +1,9 @@
-// const roleEmployeeCheck = require("./employeeRole.middleware");
-// const roleAdminCheck = require("./adminRole.middleware");
+const adminRoleCheck = require("./adminRoleCheck.middleware");
+const userRoleCheck = require("./userRoleCheck.middleware");
 
 const middleware = {
-  // roleEmployeeCheck,
-  // roleAdminCheck,
+  adminRoleCheck,
+  userRoleCheck,
 };
 
 module.exports = middleware;

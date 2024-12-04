@@ -200,5 +200,5 @@ const getDepartments = async (req, res) => {
   }
 };
 
-const Image = { addDepartment, addEmployee, getEmployees, getDepartments };
-module.exports = Image;
+const deparment = { addDepartment, addEmployee, getEmployees, getDepartments };
+module.exports = deparment;
