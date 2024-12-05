@@ -28,10 +28,10 @@ router.patch(
 
 //--------------------------------- User Routes --------------------
 router.get(
-  "/user/projects"
-  // passport.authenticate("jwt", { session: false }),
-  // middleware.userRoleCheck,
-  // controller.project.getUserProjects
+  "/user/projects",
+  passport.authenticate("jwt", { session: false }),
+  middleware.userRoleCheck,
+  controller.project.getUserProjects
 );
 
 module.exports = router;

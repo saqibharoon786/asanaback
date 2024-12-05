@@ -5,11 +5,9 @@ const productSchema = new mongoose.Schema(
   {
     product_Name: {
       type: String,
-      required: true,
     },
     product_Price: {
       type: Number,
-      required: true,
     },
     product_Description: {
       type: String,
@@ -17,7 +15,6 @@ const productSchema = new mongoose.Schema(
     },
     product_StockQuantity: {
       type: Number,
-      required: true,
     },
     product_Category: {
       type: String,

@@ -6,13 +6,6 @@ const passport = require("../middleware/passportAuth.middleware");
 const middleware = require("../middleware/index.middleware");
 
 // Admin routes
-router.get(
-  "/"
-  // passport.authenticate("jwt", { session: false }),
-  // middleware.roleAdminCheck
-  // controller.companyAdmin
-);
-
 router.post(
   "/add-department",
   // passport.authenticate("jwt", { session: false }),
@@ -25,7 +18,7 @@ router.patch(
   upload.single("employee_Image"),
   // passport.authenticate("jwt", { session: false }),
   // middleware.roleAdminCheck
-  controller.department.addEmployee
+  controller.department.addEmployeeToDepartment
 );
 
 router.get(

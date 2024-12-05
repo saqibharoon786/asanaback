@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const companyModel = require("../models/company/companyIndex.model"); // Import correctly
 const upload = require("../config/multer"); // Assuming multer setup is in this file
 
+//////////////////////////////////// Admin Controllers ///////////////////////////////////////////
 const addDepartment = async (req, res) => {
   try {
     const { department_Name } = req.body;
@@ -34,7 +35,7 @@ const addDepartment = async (req, res) => {
       success: true,
       status: 201,
       message: "Department created successfully",
-      information: { createdDepartment: { name: department_Name } },
+      information: { createdDepartment: { department_Name } },
     });
   } catch (error) {
     console.error("Error creating department:", error);
@@ -46,7 +47,7 @@ const addDepartment = async (req, res) => {
   }
 };
 
-const addEmployee = async (req, res) => {
+const addEmployeeToDepartment = async (req, res) => {
   try {
     const {
       department_Name,
@@ -200,5 +201,11 @@ const getDepartments = async (req, res) => {
   }
 };
 
-const deparment = { addDepartment, addEmployee, getEmployees, getDepartments };
+const deparment = {
+  // Admin
+  addDepartment,
+  addEmployeeToDepartment,
+  getEmployees,
+  getDepartments,
+};
 module.exports = deparment;

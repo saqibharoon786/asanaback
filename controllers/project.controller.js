@@ -1,6 +1,8 @@
 const express = require("express");
 const projectModel = require("../models/company/companyIndex.model");
+const companyModel = require("../models/company/companyIndex.model");
 
+//////////////////////////////////// Admin Controllers ///////////////////////////////////////////
 const addProject = async (req, res) => {
   try {
     const { project_Name, project_Department } = req.body;
@@ -89,23 +91,12 @@ const addProjectEmployee = async (req, res) => {
     }
 
     // Check if the employee is already assigned to the project
-    const existingEmployee = project.project_Employees.find(
-      (emp) => emp.employee_Email === employee_Email
-    );
-
-    if (existingEmployee) {
-      return res.status(400).json({
-        success: false,
-        status: 400,
-        message: "Employee already assigned to this project",
-      });
-    }
+    const employee = await companyModel.User.findOne({ email: employee_Email });
 
     // Add the employee to the project's employee list
     project.project_Employees.push({
-      employee_Name,
+      employee_Id: employee._id,
       employee_Role,
-      employee_Email,
     });
 
     await project.save();
@@ -156,10 +147,51 @@ const getAllProjects = async (req, res) => {
     });
   }
 };
+
+//////////////////////////////////// User Controllers ///////////////////////////////////////////
+const getUserProjects = async (req, res) => {
+  try {
+    const user = req.user;
+    // Find all projects where the user._id is in the project_Employees array (employee_Id)
+    const projects = await companyModel.Project.find({
+      "project_Employees.employee_Id": user._id, // Match the user's ID in the employee_Id field
+    });
+
+    // If no projects are found, send an appropriate response
+    if (!projects.length) {
+      return res.status(404).json({
+        success: false,
+        status: 404,
+        message: "No projects found for this user",
+      });
+    }
+
+    // Return the found projects
+    return res.status(200).json({
+      success: true,
+      status: 200,
+      message: "Projects retrieved successfully",
+      information: {
+        projects,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching projects:", error);
+    return res.status(500).json({
+      success: false,
+      status: 500,
+      message: error.message,
+    });
+  }
+};
+
 const project = {
+  //admin
   addProject,
   addProjectEmployee,
   getAllProjects,
+  //user
+  getUserProjects,
 };
 
 module.exports = project;
