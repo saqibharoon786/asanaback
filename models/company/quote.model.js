@@ -3,10 +3,16 @@ const mongoose = require("mongoose");
 // Product schema
 const quoteSchema = new mongoose.Schema(
   {
+    quote_Creater: {
+      name: { type: String },
+      email: { type: String },
+      phone: { type: String }
+    },
     quote_Client: {
       name: { type: String },
       email: { type: String },
       phone: { type: String },
+      address: { type: String }
     },
     quote_Products: [
       {

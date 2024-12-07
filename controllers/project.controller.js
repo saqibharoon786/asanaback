@@ -123,10 +123,13 @@ const getAllProjects = async (req, res) => {
     const projects = await projectModel.Project.find();
 
     if (!projects || projects.length === 0) {
-      return res.status(404).json({
-        success: false,
+      return res.status(200).json({
+        success: true,
         status: 404,
         message: "No projects found",
+        information: {
+          projects: []             
+        }
       });
     }
 
@@ -159,10 +162,13 @@ const getUserProjects = async (req, res) => {
 
     // If no projects are found, send an appropriate response
     if (!projects.length) {
-      return res.status(404).json({
-        success: false,
+      return res.status(200).json({
+        success: true,
         status: 404,
         message: "No projects found for this user",
+        information: {
+          Quotes: []             
+        }
       });
     }
 

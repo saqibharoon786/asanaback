@@ -12,6 +12,13 @@ router.post(
   controller.quote.createQuote
 );
 
+router.get(
+  "/get-quotes",
+  // passport.authenticate("jwt", { session: false }),
+  // middleware.roleAdminCheck
+  controller.quote.getAllQuotes
+);
+
 // // user route
 // router.get(
 //   "/get-products",

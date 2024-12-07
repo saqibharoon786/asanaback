@@ -3,6 +3,8 @@ const companyModel = require("../models/company/companyIndex.model"); // Import 
 const upload = require("../config/multer"); // Assuming multer setup is in this file
 
 //////////////////////////////////// Admin Controllers ///////////////////////////////////////////
+
+// Add a new department
 const addDepartment = async (req, res) => {
   try {
     const { department_Name } = req.body;
@@ -47,6 +49,7 @@ const addDepartment = async (req, res) => {
   }
 };
 
+// Add a new employee to a department
 const addEmployeeToDepartment = async (req, res) => {
   try {
     const {
@@ -113,7 +116,7 @@ const addEmployeeToDepartment = async (req, res) => {
     });
 
     department.department_Employees.push({
-      employee_Id: newUser._id,
+      employee_Id: newUser._id, // Using the user's _id here
       employee_Role,
     });
 
@@ -135,16 +138,20 @@ const addEmployeeToDepartment = async (req, res) => {
   }
 };
 
+// Get all employees
 const getEmployees = async (req, res) => {
   try {
     // Fetch all users from the User model
     const users = await companyModel.User.find();
 
     if (!users || users.length === 0) {
-      return res.status(404).json({
-        success: false,
+      return res.status(200).json({
+        success: true,
         status: 404,
         message: "No users found",
+        information: {
+          users: []             
+        }
       });
     }
 
@@ -164,22 +171,25 @@ const getEmployees = async (req, res) => {
   }
 };
 
+// Get all departments and their employees
 const getDepartments = async (req, res) => {
   try {
     // Fetch all departments with their employees (populating the department_Employees field)
     const departments = await companyModel.Department.find().populate(
-      "department_Employees"
+      "department_Employees.employee_Id"  
     );
 
     if (!departments || departments.length === 0) {
-      return res.status(404).json({
-        success: false,
+      return res.status(200).json({
+        success: true,
         status: 404,
         message: "No departments found",
+        information: {
+          departments: []             
+        }
       });
     }
 
-    // Return the department names along with the employees (user details)
     return res.status(200).json({
       success: true,
       status: 200,
@@ -201,11 +211,96 @@ const getDepartments = async (req, res) => {
   }
 };
 
-const deparment = {
-  // Admin
+// Delete an employee by email
+const deleteEmployee = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Check if the email is provided
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        status: 400,
+        message: "Employee email is required",
+      });
+    }
+
+    // Find the user by email to get the user _id
+    const user = await companyModel.User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        status: 404,
+        message: "Employee not found",
+      });
+    }
+
+    // Find the department where the employee exists
+    const department = await companyModel.Department.findOne({
+      "department_Employees.employee_Id": user._id,
+    });
+
+    if (!department) {
+      return res.status(404).json({
+        success: false,
+        status: 404,
+        message: "Employee not found in any department",
+      });
+    }
+
+    // Remove the employee from the department_Employees array
+    const updatedDepartment = await companyModel.Department.updateOne(
+      { "department_Employees.employee_Id": user._id },
+      { $pull: { department_Employees: { employee_Id: user._id } } }
+    );
+
+    // Delete the employee from the User collection
+    const deletedUser = await companyModel.User.deleteOne({ email });
+
+    if (deletedUser.deletedCount === 0) {
+      return res.status(500).json({
+        success: false,
+        status: 500,
+        message: "Failed to delete the employee",
+      });
+    }
+const UpdatedDepartment = await companyModel.Department.findById(department._id).populate('department_Employees.employee_Id');
+    // Return the details of the deleted employee and the updated department
+    return res.status(200).json({
+      success: true,
+      status: 200,
+      message: "Employee deleted successfully",
+      information: {
+        deletedEmployee: {
+          name: user.name,
+          email: user.email,
+          department: department.department_Name,
+        },
+        updatedDepartment: {
+          department_Id: department._id,
+          department_Name: department.department_Name,
+          remainingEmployees: UpdatedDepartment.department_Employees
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error deleting employee:", error);
+    return res.status(500).json({
+      success: false,
+      status: 500,
+      message: error.message,
+    });
+  }
+};
+
+
+const department = {
   addDepartment,
   addEmployeeToDepartment,
   getEmployees,
   getDepartments,
+  deleteEmployee,
 };
-module.exports = deparment;
+
+module.exports = department;

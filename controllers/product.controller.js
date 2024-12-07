@@ -68,14 +68,27 @@ const addProduct = async (req, res) => {
 
 const getAllProducts = async (req, res) => {
   try {
-    const allProducts = await companyModel.Product.find();
+    const Products = await companyModel.Product.find(); 
 
+
+    if (!Products || Products.length === 0) {
+      return res.status(200).json({
+        success: true,
+        status: 200,             
+        message: "No products found",
+        information: {
+          products: []           
+        }
+      });
+    }
+
+    // If products are found, return them
     return res.status(200).json({
       success: true,
       status: 200,
       message: "All products fetched successfully",
       information: {
-        allProducts,
+        products: Products       
       },
     });
   } catch (error) {
@@ -85,7 +98,6 @@ const getAllProducts = async (req, res) => {
       .json({ success: false, status: 500, message: error.message });
   }
 };
-
 const project = {
   addProduct,
   getAllProducts,
