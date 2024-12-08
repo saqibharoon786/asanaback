@@ -21,7 +21,7 @@ router.patch(
   controller.department.addEmployeeToDepartment
 );
 
-router.post(
+router.delete(
   "/delete-employee",
   // passport.authenticate("jwt", { session: false }),
   // middleware.adminRoleCheck,

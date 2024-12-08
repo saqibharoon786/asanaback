@@ -49,11 +49,11 @@ const createQuote = async (req, res) => {
 
     // Create a new quote document
     const newQuote = await companyModel.Quote.create({
-      quote_Creater,     
-      quote_Client,         
-      quote_Products,      
-      quote_Total_Price,    
-      quote_Details: newQuoteDetails,  
+      quote_Creater,
+      quote_Client,
+      quote_Products,
+      quote_Total_Price,
+      quote_Details: newQuoteDetails,
     });
 
     // Send response with the created quote
@@ -62,7 +62,7 @@ const createQuote = async (req, res) => {
       status: 200,
       message: "Quote created successfully",
       information: {
-        createdQuote: newQuote, 
+        createdQuote: newQuote,
       },
     });
   } catch (error) {
@@ -84,7 +84,7 @@ const getAllQuotes = async (req, res) => {
       return res.status(200).json({
         success: true,
         status: 200,
-        message: "No Quotes found", 
+        message: "No Quotes found",
         information: {
           Quotes: [],
         },
@@ -109,9 +109,51 @@ const getAllQuotes = async (req, res) => {
   }
 };
 
+
+
+const getQuoteById = async (req, res) => {
+  try {
+
+    const { id } = req.params;
+
+    // Fetch the quote by ID using findById
+    const quote = await companyModel.Quote.findById(id);
+
+    // If no quote is found, return a message with an empty array
+    if (!quote) {
+      return res.status(200).json({
+        success: true,
+        status: 404,
+        message: "No Quote found",
+        information: {
+          quote: [],
+        },
+      });
+    }
+
+    // If quote is found, return it in the response
+    return res.status(200).json({
+      success: true,
+      status: 200,
+      message: "Quote retrieved successfully",
+      information: {
+        quote,  // Wrap in an array to maintain consistency
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching Quote:", error);
+    return res.status(500).json({
+      success: false,
+      status: 500,
+      message: error.message,
+    });
+  }
+};
+
 const quote = {
   createQuote,
   getAllQuotes,
+  getQuoteById
 };
 
 module.exports = quote;

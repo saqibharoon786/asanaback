@@ -106,6 +106,17 @@ const addEmployeeToDepartment = async (req, res) => {
       imageBase64: req.file.buffer.toString("base64"),
     };
 
+    const existingEmployeeEmail = await companyModel.User.findOne({ email: employee_Email });
+    if (existingEmployeeEmail) {
+      return res.status(409).json({
+        success: false,
+        status: 409,
+        message: "Employee already exists",
+      });
+    }
+
+
+
     const newUser = await companyModel.User.create({
       name: employee_Name,
       email: employee_Email,
@@ -150,7 +161,7 @@ const getEmployees = async (req, res) => {
         status: 404,
         message: "No users found",
         information: {
-          users: []             
+          users: []
         }
       });
     }
@@ -176,7 +187,7 @@ const getDepartments = async (req, res) => {
   try {
     // Fetch all departments with their employees (populating the department_Employees field)
     const departments = await companyModel.Department.find().populate(
-      "department_Employees.employee_Id"  
+      "department_Employees.employee_Id"
     );
 
     if (!departments || departments.length === 0) {
@@ -185,7 +196,7 @@ const getDepartments = async (req, res) => {
         status: 404,
         message: "No departments found",
         information: {
-          departments: []             
+          departments: []
         }
       });
     }
@@ -212,80 +223,161 @@ const getDepartments = async (req, res) => {
 };
 
 // Delete an employee by email
+// const deleteEmployee = async (req, res) => {
+//   try {
+//     const { email } = req.body;
+
+//     // Check if the email is provided
+//     if (!email) {
+//       return res.status(400).json({
+//         success: false,
+//         status: 400,
+//         message: "Employee email is required",
+//       });
+//     }
+
+// Find the user by email to get the user _id
+//     const user = await companyModel.User.findOne({ email });
+
+//     if (!user) {
+//       return res.status(404).json({
+//         success: false,
+//         status: 404,
+//         message: "Employee not found",
+//       });
+//     }
+
+//     // Find the department where the employee exists
+//     const department = await companyModel.Department.findOne({
+//       "department_Employees.employee_Id": user._id,
+//     });
+
+//     if (department) {
+//       // If the employee exists in a department, remove the employee from the department_Employees array
+//       const updatedDepartment = await companyModel.Department.updateOne(
+//         { "department_Employees.employee_Id": user._id },
+//         { $pull: { department_Employees: { employee_Id: user._id } } }
+//       );
+
+//       if (updatedDepartment.modifiedCount === 0) {
+//         return res.status(500).json({
+//           success: false,
+//           status: 500,
+//           message: "Failed to remove the employee from department",
+//         });
+//       }
+//     }
+
+//     // Delete the employee from the User collection
+//     const deletedUser = await companyModel.User.deleteOne({ email });
+
+//     if (deletedUser.deletedCount === 0) {
+//       return res.status(500).json({
+//         success: false,
+//         status: 500,
+//         message: "Failed to delete the employee",
+//       });
+//     }
+
+//     // If the employee was found in a department, populate the updated department info
+//     let updatedDepartmentInfo = null;
+//     if (department) {
+//       const updatedDepartment = await companyModel.Department.findById(department._id).populate('department_Employees.employee_Id');
+//       updatedDepartmentInfo = {
+//         department_Id: updatedDepartment._id,
+//         department_Name: updatedDepartment.department_Name,
+//         remainingEmployees: updatedDepartment.department_Employees,
+//       };
+//     }
+
+//     // Return the details of the deleted employee and the updated department (if applicable)
+//     return res.status(200).json({
+//       success: true,
+//       status: 200,
+//       message: "Employee deleted successfully",
+//       information: {
+//         deletedEmployee: {
+//           name: user.name,
+//           email: user.email,
+//           department: department ? department.department_Name : 'No department',
+//         },
+//         updatedDepartment: updatedDepartmentInfo,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Error deleting employee:", error);
+//     return res.status(500).json({
+//       success: false,
+//       status: 500,
+//       message: error.message,
+//     });
+//   }
+// };
+
 const deleteEmployee = async (req, res) => {
   try {
     const { email } = req.body;
 
-    // Check if the email is provided
     if (!email) {
       return res.status(400).json({
         success: false,
         status: 400,
-        message: "Employee email is required",
+        message: "Enter the email of the employee/user"
       });
     }
 
-    // Find the user by email to get the user _id
-    const user = await companyModel.User.findOne({ email });
+    
 
+    // Find the user by email
+    const user = await companyModel.User.findOne({ email });
     if (!user) {
       return res.status(404).json({
         success: false,
         status: 404,
-        message: "Employee not found",
+        message: "User/Employee not found"
       });
     }
 
-    // Find the department where the employee exists
-    const department = await companyModel.Department.findOne({
-      "department_Employees.employee_Id": user._id,
-    });
-
-    if (!department) {
-      return res.status(404).json({
-        success: false,
-        status: 404,
-        message: "Employee not found in any department",
-      });
-    }
+    const user_id = user._id;
 
     // Remove the employee from the department_Employees array
-    const updatedDepartment = await companyModel.Department.updateOne(
-      { "department_Employees.employee_Id": user._id },
-      { $pull: { department_Employees: { employee_Id: user._id } } }
-    );
+    const emp_inDepartment = await companyModel.Department.findOne({
+      "department_Employees.employee_Id": user_id
+    });
 
-    // Delete the employee from the User collection
-    const deletedUser = await companyModel.User.deleteOne({ email });
-
-    if (deletedUser.deletedCount === 0) {
-      return res.status(500).json({
-        success: false,
-        status: 500,
-        message: "Failed to delete the employee",
-      });
+    if (emp_inDepartment) {
+      // If the employee is found in a department, remove them from the array
+      await companyModel.Department.updateOne(
+        { "department_Employees.employee_Id": user_id },
+        { $pull: { department_Employees: { employee_Id: user_id } } }
+      );
     }
-const UpdatedDepartment = await companyModel.Department.findById(department._id).populate('department_Employees.employee_Id');
-    // Return the details of the deleted employee and the updated department
+
+    // Remove the employee from the project_Employees array
+    const emp_inProject = await companyModel.Project.findOne({
+      "project_Employees.employee_Id": user_id
+    });
+
+    if (emp_inProject) {
+      // If the employee is found in a project, remove them from the array
+      await companyModel.Project.updateMany(
+        { "project_Employees.employee_Id": user_id },
+        { $pull: { project_Employees: { employee_Id: user_id } } }
+      );
+    }
+
+    // Finally, delete the user from the User collection
+    await companyModel.User.deleteOne({ email });
+
     return res.status(200).json({
       success: true,
       status: 200,
-      message: "Employee deleted successfully",
-      information: {
-        deletedEmployee: {
-          name: user.name,
-          email: user.email,
-          department: department.department_Name,
-        },
-        updatedDepartment: {
-          department_Id: department._id,
-          department_Name: department.department_Name,
-          remainingEmployees: UpdatedDepartment.department_Employees
-        },
-      },
+      message: "Employee successfully deleted from department, project, and user collections"
     });
-  } catch (error) {
-    console.error("Error deleting employee:", error);
+
+  }
+  catch (error) {
+    console.error("Error fetching departments and employees:", error);
     return res.status(500).json({
       success: false,
       status: 500,
