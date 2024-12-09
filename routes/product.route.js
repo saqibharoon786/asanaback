@@ -7,16 +7,16 @@ const middleware = require("../middleware/index.middleware");
 // Admin routes
 router.post(
   "/add-product",
-  // passport.authenticate("jwt", { session: false }),
-  // middleware.roleAdminCheck
+  passport.authenticate("jwt", { session: false }),
+  middleware.adminRoleCheck,
   controller.product.addProduct
 );
 
 // user route
 router.get(
   "/get-products",
-  // passport.authenticate("jwt", { session: false }),
-  // middleware.roleUserCheck
+  passport.authenticate("jwt", { session: false }),
+  middleware.adminRoleCheck,
   controller.product.getAllProducts
 );
 

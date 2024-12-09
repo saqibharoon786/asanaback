@@ -6,6 +6,7 @@ const department = require("./department.route");
 const project = require("./project.route");
 const product = require("./product.route");
 const quote = require("./quote.route");
+const lead = require("./lead.route");
 
 // router.use("/", (req, res) => {
 //   res.send("HOME");
@@ -16,5 +17,6 @@ router.use("/department", department);
 router.use("/project", project);
 router.use("/product", product);
 router.use("/quote", quote);
+router.use("/lead", lead);
 
 module.exports = router;

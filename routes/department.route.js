@@ -42,4 +42,12 @@ router.get(
   controller.department.getDepartments
 );
 
+// Uer Routes
+router.get(
+  "/user/departments",
+  passport.authenticate("jwt", { session: false }),
+  middleware.userRoleCheck,
+  controller.department.getUserDepartments
+);
+
 module.exports = router;

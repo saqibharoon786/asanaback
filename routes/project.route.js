@@ -7,22 +7,22 @@ const middleware = require("../middleware/index.middleware");
 //--------------------------------- admin Routes --------------------
 router.get(
   "/admin/projects",
-  // passport.authenticate("jwt", { session: false }),
-  // middleware.roleAdminCheck
+  passport.authenticate("jwt", { session: false }),
+  middleware.adminRoleCheck,
   controller.project.getAllProjects
 );
 
 router.post(
   "/admin/add-project",
-  // passport.authenticate("jwt", { session: false }),
-  // middleware.roleAdminCheck
+  passport.authenticate("jwt", { session: false }),
+  middleware.adminRoleCheck,
   controller.project.addProject
 );
 
 router.patch(
   "/admin/add-employee-to-project",
-  // passport.authenticate("jwt", { session: false }),
-  // middleware.roleAdminCheck
+  passport.authenticate("jwt", { session: false }),
+  middleware.adminRoleCheck,
   controller.project.addProjectEmployee
 );
 

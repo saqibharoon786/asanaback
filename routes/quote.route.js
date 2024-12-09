@@ -7,21 +7,21 @@ const middleware = require("../middleware/index.middleware");
 // Admin routes
 router.post(
   "/create-quote",
-  // passport.authenticate("jwt", { session: false }),
-  // middleware.roleAdminCheck
+  passport.authenticate("jwt", { session: false }),
+  middleware.adminRoleCheck,
   controller.quote.createQuote
 );
 
 router.get(
   "/get-quotes",
-  // passport.authenticate("jwt", { session: false }),
-  // middleware.roleAdminCheck
+  passport.authenticate("jwt", { session: false }),
+  middleware.adminRoleCheck,
   controller.quote.getAllQuotes
 );
 router.get(
   "getr-quote-by-id/:id",
-  // passport.authenticate("jwt", { session: false }),
-  // middleware.roleAdminCheck
+  passport.authenticate("jwt", { session: false }),
+  middleware.adminRoleCheck,
   controller.quote.getQuoteById
 );
 

@@ -367,12 +367,121 @@ const deleteEmployee = async (req, res) => {
   }
 };
 
+// const getUserDepartments = async (req, res) => {
+//   try {
+//     const user = req.user;
+//     const userId = user._id;
+
+//     // Find all departments where the userId is in department_Employees array
+//     const departments = await companyModel.Department.find({
+//       "department_Employees.employee_Id": userId,
+//     })
+//       // Populate employee details for each employee in the department
+//       .populate({
+//         path: "department_Employees.employee_Id", // Populate the employee_Id field
+//         model: "User", // Referring to the User model
+//         select: "name email contact image" // Select only necessary fields
+//       });
+
+//     // Loop through each department to map the employees correctly
+//     const result = departments.map(department => {
+//       const employees = department.department_Employees.map(emp => {
+//         return {
+//           employee_Id: emp.employee_Id, // User object (populated)
+//           employee_Role: emp.employee_Role,
+//         };
+//       });
+
+//       return {
+//         department_Name: department.department_Name,
+//         employees: employees,
+//       };
+//     });
+
+//     return res.status(200).json({
+//       success: true,
+//       status: 200,
+//       message: "User Departments",
+//       information: { departments: result },  // Return the list of departments and employees
+//     });
+//   } catch (error) {
+//     console.error("Error fetching departments by user ID:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: error.message,
+//     });
+//   }
+// };
+const getUserDepartments = async (req, res) => {
+  try {
+    const employee_Id = req.user._id;
+
+    if (!employee_Id) {
+      return res.status(400).json({
+        success: false,
+        message: "Employee ID is required in the request body.",
+      });
+    }
+
+    const User = companyModel.User;
+    // Find departments where the given employee ID is present in department_Employees array
+    const departments = await companyModel.Department.find({
+      "department_Employees.employee_Id": employee_Id,
+    })
+      .populate({
+        path: "department_Employees.employee_Id", // Populate employee_Id with User details
+        model: "User", // Refer to the User model
+        select: "name email contact image", // Only include specific fields
+      });
+
+    if (!departments || departments.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No departments found for the given employee ID.",
+      });
+    }
+
+    // Prepare response to include departments and populated employee details
+    const result = departments.map((department) => {
+      const employees = department.department_Employees.map((emp) => {
+        return {
+          employee_Id: emp.employee_Id._id, // User's ObjectId
+          name: emp.employee_Id.name, // User's name
+          email: emp.employee_Id.email, // User's email
+          contact: emp.employee_Id.contact, // User's contact
+          image: emp.employee_Id.image, // User's image
+          employee_Role: emp.employee_Role, // Role in department
+        };
+      });
+
+      return {
+        department_Name: department.department_Name,
+        employees: employees,
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      status: 200,
+      message: "Departments and employees retrieved successfully",
+      information: { departments: result },
+    });
+  } catch (error) {
+    console.error("Error fetching departments and employees:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 const department = {
   addDepartment,
   addEmployeeToDepartment,
   getEmployees,
   getDepartments,
   deleteEmployee,
+  getUserDepartments
 };
 
 module.exports = department;
