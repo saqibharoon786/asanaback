@@ -1,14 +1,17 @@
 const express = require("express");
 const companyModel = require("../models/company/companyIndex.model");
-
 const addProduct = async (req, res) => {
   try {
     const {
       product_Name,
       product_Price,
-      product_Description,
       product_StockQuantity,
       product_Category,
+      product_Description,
+      product_DateOfPurchase,
+      product_DamagedPieces,
+      product_StockLocation,
+      product_Vendor,
     } = req.body;
 
     if (
@@ -16,7 +19,14 @@ const addProduct = async (req, res) => {
       !product_Price ||
       !product_Description ||
       !product_StockQuantity ||
-      !product_Category
+      !product_Category ||
+      !product_DateOfPurchase ||
+      !product_StockLocation ||
+      !product_Vendor ||
+      !product_Vendor.vendor_Name ||
+      !product_Vendor.vendor_Email ||
+      !product_Vendor.vendor_Address ||
+      !product_Vendor.vendor_Contact
     ) {
       return res.status(400).json({
         success: false,
@@ -44,6 +54,15 @@ const addProduct = async (req, res) => {
       product_Description,
       product_StockQuantity,
       product_Category,
+      product_DateOfPurchase,
+      product_DamagedPieces: product_DamagedPieces || 0, // Default to 0 if not provided
+      product_StockLocation,
+      product_Vendor: {
+        vendor_Name: product_Vendor.vendor_Name,
+        vendor_Email: product_Vendor.vendor_Email,
+        vendor_Address: product_Vendor.vendor_Address,
+        vendor_Contact: product_Vendor.vendor_Contact,
+      },
     });
 
     // Save the product to the database
@@ -53,9 +72,7 @@ const addProduct = async (req, res) => {
       status: 201,
       message: "Product created successfully",
       information: {
-        createdProduct: {
-          newProduct,
-        },
+        newProduct,
       },
     });
   } catch (error) {
@@ -65,6 +82,7 @@ const addProduct = async (req, res) => {
       .json({ success: false, status: 500, message: error.message });
   }
 };
+
 
 const getAllProducts = async (req, res) => {
   try {

@@ -321,71 +321,51 @@ const deleteEmployee = async (req, res) => {
     if (!email) {
       return res.status(400).json({
         success: false,
-        status: 400,
-        message: "Enter the email of the employee/user"
+        message: "Please provide the email of the employee."
       });
     }
-
-    
 
     // Find the user by email
     const user = await companyModel.User.findOne({ email });
     if (!user) {
       return res.status(404).json({
         success: false,
-        status: 404,
-        message: "User/Employee not found"
+        message: "User not found."
       });
     }
 
-    const user_id = user._id;
+    const userId = user._id;
 
-    // Remove the employee from the department_Employees array
-    const emp_inDepartment = await companyModel.Department.findOne({
-      "department_Employees.employee_Id": user_id
-    });
+    // Mark the user as deleted by updating the 'status' field
+    await companyModel.User.updateOne(
+      { email }, // Find the user by email
+      { $set: { deleted: true } } // Update the 'deleted' field to true
+    );
 
-    if (emp_inDepartment) {
-      // If the employee is found in a department, remove them from the array
-      await companyModel.Department.updateOne(
-        { "department_Employees.employee_Id": user_id },
-        { $pull: { department_Employees: { employee_Id: user_id } } }
-      );
-    }
+    // Remove the user from the department_Employees array
+    await companyModel.Department.updateMany(
+      { "department_Employees.employee_Id": userId },
+      { $pull: { department_Employees: { employee_Id: userId } } }
+    );
 
-    // Remove the employee from the project_Employees array
-    const emp_inProject = await companyModel.Project.findOne({
-      "project_Employees.employee_Id": user_id
-    });
-
-    if (emp_inProject) {
-      // If the employee is found in a project, remove them from the array
-      await companyModel.Project.updateMany(
-        { "project_Employees.employee_Id": user_id },
-        { $pull: { project_Employees: { employee_Id: user_id } } }
-      );
-    }
-
-    // Finally, delete the user from the User collection
-    await companyModel.User.deleteOne({ email });
+    // Remove the user from the project_Employees array
+    await companyModel.Project.updateMany(
+      { "project_Employees.employee_Id": userId },
+      { $pull: { project_Employees: { employee_Id: userId } } }
+    );
 
     return res.status(200).json({
       success: true,
-      status: 200,
-      message: "Employee successfully deleted from department, project, and user collections"
+      message: "Employee marked as deleted successfully."
     });
-
-  }
-  catch (error) {
-    console.error("Error fetching departments and employees:", error);
+  } catch (error) {
+    console.error("Error deleting employee:", error);
     return res.status(500).json({
       success: false,
-      status: 500,
       message: error.message,
     });
   }
 };
-
 
 const department = {
   addDepartment,
