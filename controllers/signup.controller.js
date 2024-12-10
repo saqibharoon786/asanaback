@@ -37,7 +37,7 @@ const signUp = async (req, res) => {
       email,
       password: hashedPassword,
       contact,
-      admin: admin || false, // Default to false if no admin role is provided
+      admin: true, 
     });
 
     // Return a success message with the necessary user details

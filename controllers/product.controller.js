@@ -88,7 +88,6 @@ const getAllProducts = async (req, res) => {
   try {
     const Products = await companyModel.Product.find(); 
 
-
     if (!Products || Products.length === 0) {
       return res.status(200).json({
         success: true,
