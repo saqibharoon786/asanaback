@@ -11,7 +11,7 @@ const quoteSchema = new mongoose.Schema(
     quote_Client: {
       name: { type: String },
       email: { type: String },
-      phone: { type: String },
+      contact: { type: String },
       address: { type: String }
     },
     quote_Products: [
@@ -24,7 +24,13 @@ const quoteSchema = new mongoose.Schema(
         },
       },
     ],
-    quote_Total_Price: {
+    quote_TotalPrice: {
+      type: Number,
+    },
+    quote_Discount: {
+      type: Number
+    },
+    quote_DiscountedPrice: {
       type: Number,
     },
     quote_Details: {
