@@ -21,8 +21,8 @@ router.get(
 
 router.get(
   "/:quoteId",
-  // passport.authenticate("jwt", { session: false }),
-  // middleware.adminRoleCheck,
+  passport.authenticate("jwt", { session: false }),
+  middleware.adminRoleCheck,
   controller.quote.getQuoteById
 );
 

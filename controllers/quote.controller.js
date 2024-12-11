@@ -3,8 +3,17 @@ const companyModel = require("../models/company/companyIndex.model");
 
 const createQuote = async (req, res) => {
   try {
+    const user = req.user;
+    const name = req.user.name;
+    var quote_TotalPrice = 0;
+    var tax = 0.05;
+
+    var product_Tax = 0;
+    var product_TaxAmount = 0;
+    var product_DiscountedAmount = 0;
+
     // Destructure data from request body
-    const { quote_Creater, quote_Client, quote_Products, quote_Details, quote_Discount } = req.body;
+    var { quote_Creater, quote_Client, quote_Products, quote_Details } = req.body;
 
     // Validation: Check if the client and products are provided
     if (!quote_Creater || !quote_Client || !quote_Products || quote_Products.length === 0) {
@@ -15,15 +24,14 @@ const createQuote = async (req, res) => {
       });
     }
 
-    // Initialize total price
-    var quote_TotalPrice = 0;
-
     // Loop through each product in quote_Products array
-    for (const item of quote_Products) {
-      const { product, quantity } = item;
+    for (var item of quote_Products) {
+      product_DiscountedAmount = 0;
+      product_TaxAmount = 0;
+      var { product, quantity, product_Price, product_Discount } = item;
 
       // Find product in the database
-      const dbProduct = await companyModel.Product.findOne({
+      var dbProduct = await companyModel.Product.findOne({
         product_Name: product,
       });
 
@@ -35,34 +43,43 @@ const createQuote = async (req, res) => {
         });
       }
 
-      // Calculate the price for this product (product price * quantity)
-      var productTotalPrice = dbProduct.product_Price * quantity;
-      // Add this product's total price to the overall quote total
-      quote_TotalPrice += productTotalPrice;
-    }
-      var quote_DiscountedPrice = 0;
-    // Apply discount if provided and valid
-    if (quote_Discount && quote_Discount > 0 && quote_Discount <= 100) {
-      discountAmount = (quote_TotalPrice * quote_Discount) / 100; // Calculate discount percentage
-      quote_DiscountedPrice = quote_TotalPrice - discountAmount; // Subtract discount from total price
-    }
+      product_Tax = product_Price * quantity * tax;
+      item.product_Tax = product_Tax;
+      product_Price = (product_Price * quantity) + product_Tax;
+      product_DiscountedAmount = product_Price * (product_Discount / 100);
+      product_Price = product_Price - product_DiscountedAmount;
+      item.product_FinalAmount = product_Price;
 
+      quote_TotalPrice += item.product_FinalAmount;
+    }
     // Prepare quote details
-    const newQuoteDetails = {
+    var newQuoteDetails = {
       dateCreated: new Date(),
       status: quote_Details?.status || "Pending", // Default to "Pending" if not provided
     };
 
     // Create a new quote document
-    const newQuote = await companyModel.Quote.create({
+    var newQuote = await companyModel.Quote.create({
       quote_Creater,
       quote_Client,
       quote_Products,
       quote_TotalPrice,
-      quote_Discount: quote_Discount || 0, // Save the discount provided, or default to 0
-      quote_DiscountedPrice,
       quote_Details: newQuoteDetails,
     });
+
+    var quote_Identifier;
+
+    if (name) {
+      const namePart = name.substring(0, 2).toUpperCase(); // Get first two characters of the name and convert to uppercase
+      const idPart = newQuote._id.toString().slice(-4);  // Get last 4 characters of the newQuote._id
+      quote_Identifier = `${namePart}-${idPart}`;
+    } else {
+      quote_Identifier = newQuote._id.toString();
+    }
+    
+    // Attach the identifier to the document (if needed)
+    newQuote.quote_Identifier = quote_Identifier;
+    await newQuote.save();
 
     // Send response with the created quote
     return res.status(200).json({
@@ -70,7 +87,7 @@ const createQuote = async (req, res) => {
       status: 200,
       message: "Quote created successfully",
       information: {
-        createdQuote: newQuote,
+        newQuote,
       },
     });
   } catch (error) {
@@ -86,7 +103,7 @@ const createQuote = async (req, res) => {
 const getAllQuotes = async (req, res) => {
   try {
     // Fetch all Quotes
-    const Quotes = await companyModel.Quote.find();
+    var Quotes = await companyModel.Quote.find();
 
     if (!Quotes || Quotes.length === 0) {
       return res.status(200).json({
@@ -119,10 +136,10 @@ const getAllQuotes = async (req, res) => {
 
 const getQuoteById = async (req, res) => {
   try {
-    const { quoteId } = req.params;
+    var { quoteId } = req.params;
 
     // Fetch the quote by ID using findById
-    const quote = await companyModel.Quote.findById(quoteId);
+    var quote = await companyModel.Quote.findById(quoteId);
 
     // If no quote is found, return a message with an empty array
     if (!quote) {

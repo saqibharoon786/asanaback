@@ -3,6 +3,9 @@ const mongoose = require("mongoose");
 // Product schema
 const quoteSchema = new mongoose.Schema(
   {
+    quote_Identifier: {
+      type: String,
+    },
     quote_Creater: {
       name: { type: String },
       email: { type: String },
@@ -22,15 +25,22 @@ const quoteSchema = new mongoose.Schema(
         quantity: {
           type: Number,
         },
+        product_Price: {
+          type: Number,
+        },  
+        product_Tax: {
+          type: Number,
+        },
+        
+        product_Discount: {
+          type: Number,
+        },  
+        product_FinalAmount: {
+          type: Number,
+        },      
       },
     ],
     quote_TotalPrice: {
-      type: Number,
-    },
-    quote_Discount: {
-      type: Number
-    },
-    quote_DiscountedPrice: {
       type: Number,
     },
     quote_Details: {
@@ -41,7 +51,9 @@ const quoteSchema = new mongoose.Schema(
         default: "Pending",
       },
     },
+    
   },
+  
   { timestamps: true }
 );
 
