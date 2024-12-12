@@ -5,24 +5,29 @@ const passport = require("../middleware/passportAuth.middleware");
 const middleware = require("../middleware/index.middleware");
 
 // Admin routes
-router.get(
-  "/all-leads",
+router.post(
+  "/create-invoice",
   passport.authenticate("jwt", { session: false }),
   middleware.adminRoleCheck,
-  controller.lead.getAllLeads
-);
-
-router.post(
-  "/create-lead",
-  // passport.authenticate("jwt", { session: false }),
-  // middleware.adminRoleCheck,
-  controller.lead.createLead
+  controller.invoice.createInvoice
 );
 
 router.get(
-  '/:leadId',
-  passport.authenticate('jwt', { session: false }),
+  "/get-invoices",
+  passport.authenticate("jwt", { session: false }),
   middleware.adminRoleCheck,
-  controller.lead.getLeadById)
+  controller.invoice. getAllInvoice
+);
+router.get(
+  "/:invoiceId", 
+  passport.authenticate("jwt", { session: false }), 
+  middleware.adminRoleCheck, 
+  controller.invoice.getInvoiceById 
+);
+
+
+
+
+
 
 module.exports = router;

@@ -1,6 +1,8 @@
 const express = require("express");
 const companyModel = require("../models/company/companyIndex.model");
 
+const Quote = require('../models/company/quote.model'); // Import the Quote model
+const Invoice = require('../models/company/invoice.model'); // Import the Invoice model
 const createQuote = async (req, res) => {
   try {
     const user = req.user;
@@ -48,6 +50,7 @@ const createQuote = async (req, res) => {
       product_Price = (product_Price * quantity) + product_Tax;
       product_DiscountedAmount = product_Price * (product_Discount / 100);
       product_Price = product_Price - product_DiscountedAmount;
+      item.product_Discount = product_Discount;
       item.product_FinalAmount = product_Price;
 
       quote_TotalPrice += item.product_FinalAmount;
@@ -172,10 +175,188 @@ const getQuoteById = async (req, res) => {
   }
 };
 
+
+const acceptQuoteById = async (req, res) => {
+  try {
+    const { quoteId } = req.params;
+
+    // Fetch the quote by ID using findById
+    const quote = await companyModel.Quote.findById(quoteId);
+
+    // If no quote is found, return a message with an empty array
+    if (!quote) {
+      return res.status(404).json({
+        success: false,
+        status: 404,
+        message: "No Quote found with this ID",
+      });
+    }
+
+    // Ensure the quote is not already accepted
+    if (quote.quote_Details.status === "Accepted") {
+      return res.status(400).json({
+        success: false,
+        status: 400,
+        message: "Quote has already been accepted.",
+      });
+    }
+
+    // Update the quote's status to "Accepted"
+    quote.quote_Details.status = "Accepted";
+
+    // Save the updated quote
+    const updatedQuote = await quote.save();
+    
+    // Check if the quote save was successful
+    if (!updatedQuote) {
+      return res.status(500).json({
+        success: false,
+        status: 500,
+        message: "Failed to update quote status",
+      });
+    }
+
+    // Prepare the invoice data from the quote
+    const invoiceData = {
+      invoice_Identifier: quote.quote_Identifier,  // You can modify this if needed to generate a new invoice ID
+      invoice_Creater: quote.quote_Creater,
+      invoice_Client: quote.quote_Client,
+      invoice_Products: quote.quote_Products,
+      invoice_TotalPrice: quote.quote_TotalPrice,
+      invoice_Details: {
+        status: "Accepted",
+        dateCreated: Date.now(),
+      },
+    };
+
+    // Create the new Invoice document
+    const newInvoice = new Invoice(invoiceData);
+    
+    // Save the invoice to the database
+    const savedInvoice = await newInvoice.save();
+
+    // If invoice creation failed
+    if (!savedInvoice) {
+      return res.status(500).json({
+        success: false,
+        status: 500,
+        message: "Failed to create invoice",
+      });
+    }
+
+    // Return the success response with both quote and invoice details
+    return res.status(200).json({
+      success: true,
+      status: 200,
+      message: "Quote Accepted and Invoice Created successfully",
+      information: {
+        quote: updatedQuote,
+        invoice: savedInvoice,
+      },
+    });
+  } catch (error) {
+    console.error("Error in accepting quote:", error);
+
+    // Improved error message
+    return res.status(500).json({
+      success: false,
+      status: 500,
+      message: error.message || "An error occurred while processing the quote.",
+    });
+  }
+};
+
+
+
+const rejectQuoteById = async (req, res) => {
+  try {
+    var { quoteId } = req.params;
+
+    // Fetch the quote by ID using findById
+    var quote = await companyModel.Quote.findById(quoteId);
+
+    // If no quote is found, return a message with an empty array
+    if (!quote) {
+      return res.status(200).json({
+        success: true,
+        status: 404,
+        message: "No Quote found",
+        information: {
+          quote: [],
+        },
+      });
+    }
+
+    quote.quote_Details.status = "Rejected";
+    await quote.save();
+
+    // If quote is found, return it in the response
+    return res.status(200).json({
+      success: true,
+      status: 200,
+      message: "Quote Accepted successfully",
+      information: {
+        quote, // Wrap in an array to maintain consistency
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching Quote:", error);
+    return res.status(500).json({
+      success: false,
+      status: 500,
+      message: error.message,
+    });
+  }
+};
+
+
+
+const deleteQuote = async (req, res) => {
+  try {
+    const { quoteId } =  req.params;
+
+    if (!quoteId) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide the quote ID."
+      });
+    }
+
+    // Find the quote by ID and mark it as deleted
+    const quote = await companyModel.Quote.findById(quoteId);
+    if (!quote) {
+      return res.status(404).json({
+        success: false,
+        message: "Quote not found."
+      });
+    }
+
+    // Mark the quote as deleted by updating the 'deleted' field to true
+    await companyModel.Quote.updateOne(
+      { _id: quoteId },
+      { $set: { deleted: true } }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Quote marked as deleted successfully."
+    });
+  } catch (error) {
+    console.error("Error deleting quote:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 const quote = {
   createQuote,
   getAllQuotes,
   getQuoteById,
+  acceptQuoteById,
+  rejectQuoteById,
+  deleteQuote,
 };
 
 module.exports = quote;

@@ -105,9 +105,42 @@ const createLead = async (req, res) => {
   }
 };
 
+
+
+const getLeadById = async (req, res) => {
+  try {
+    const { leadId } = req.params;
+    const lead = await companyModel.Lead.findById(leadId);
+
+    if (!lead) {
+      return res.status(404).json({
+        success: false,
+        status: 404,
+        message: "No Lead found.",
+        information: { lead: [] },
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      status: 200,
+      message: "Lead retrieved successfully.",
+      information: { lead },
+    });
+  } catch (error) {
+    console.error("Error fetching lead by ID:", error);
+    return res.status(500).json({
+      success: false,
+      status: 500,
+      message: error.message,
+    });
+  }
+};
+
 const lead = {
   createLead,
-  getAllLeads
+  getAllLeads,
+  getLeadById
 };
 
 module.exports = lead;

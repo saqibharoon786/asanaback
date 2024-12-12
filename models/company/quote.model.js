@@ -51,7 +51,7 @@ const quoteSchema = new mongoose.Schema(
         default: "Pending",
       },
     },
-    
+    deleted: { type: Boolean, default: false }
   },
   
   { timestamps: true }

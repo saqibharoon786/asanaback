@@ -12,7 +12,6 @@ router.post(
   controller.product.addProduct
 );
 
-// user route
 router.get(
   "/get-products",
   passport.authenticate("jwt", { session: false }),

@@ -5,6 +5,7 @@ var project = require("./project.controller");
 var product = require("./product.controller");
 var quote = require("./quote.controller");
 var lead = require("./lead.controller");
+var invoice = require("./invoice.controller");
 
 var controller = {
   loggingIn,
@@ -13,7 +14,8 @@ var controller = {
   project,
   product,
   quote,
-  lead
+  lead,
+  invoice,
 };
 
 module.exports = controller;

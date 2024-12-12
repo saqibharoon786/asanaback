@@ -4,6 +4,7 @@ const Project = require("./project.model");
 const Product = require("./product.model");
 const Quote = require("./quote.model");
 const Lead = require("./lead.model");
+const Invoice = require("./invoice.model");
 
 const companyModel = {
   User,
@@ -11,7 +12,8 @@ const companyModel = {
   Project,
   Product,
   Quote,
-  Lead
+  Lead,
+  Invoice
 };
 
 module.exports = companyModel;

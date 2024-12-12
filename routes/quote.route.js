@@ -26,12 +26,27 @@ router.get(
   controller.quote.getQuoteById
 );
 
-// // user route
-// router.get(
-//   "/get-products",
-//   // passport.authenticate("jwt", { session: false }),
-//   // middleware.roleUserCheck
-//   controller.product.getAllProducts
-// );
+router.patch(
+  "/accept/:quoteId",
+  passport.authenticate("jwt", { session: false }),
+  middleware.adminRoleCheck,
+  controller.quote.acceptQuoteById
+);
+
+router.patch(
+  "/reject/:quoteId",
+  passport.authenticate("jwt", { session: false }),
+  middleware.adminRoleCheck,
+  controller.quote.rejectQuoteById
+);
+
+router.delete(
+  "/delete/:quoteId",
+  passport.authenticate("jwt", { session: false }),
+  middleware.adminRoleCheck,
+  controller.quote.deleteQuote,
+);
+
+
 
 module.exports = router;
