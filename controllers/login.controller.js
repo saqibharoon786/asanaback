@@ -1,10 +1,11 @@
+require('dotenv').config();
 const express = require("express");
 const companyModel = require("../models/company/companyIndex.model");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const joi = require("joi");
 
-const SECRET = "1234";
+const JWT_SECRET = process.env.JWT_SECRET;
 
 const loggingIn = async (req, res) => {
   try {
@@ -51,7 +52,7 @@ const loggingIn = async (req, res) => {
     }
 
     // Generate JWT
-    const jwtLoginToken = jwt.sign({ email }, SECRET, {
+    const jwtLoginToken = jwt.sign({ email }, JWT_SECRET, {
       expiresIn: "7d",
     });
 

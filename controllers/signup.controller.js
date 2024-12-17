@@ -37,7 +37,7 @@ const signUp = async (req, res) => {
       email,
       password: hashedPassword,
       contact,
-      admin: true, 
+      department: "Admin", 
     });
 
     // Return a success message with the necessary user details

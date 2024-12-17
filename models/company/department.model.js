@@ -5,12 +5,11 @@ const departmentSchema = new mongoose.Schema(
     department_Name: { type: String, required: true },
     department_Employees: [
       {
-        employee_Id: { type: String },
-        employee_Role: {
+        userId: { type: String },
+        employee_Designation: {
           type: String,
-          enum: ["moderator", "employee"],
-          default: "employee",
         },
+        deleted: { type: Boolean, default: false },
       },
     ],
   },

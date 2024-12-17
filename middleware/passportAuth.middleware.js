@@ -1,11 +1,14 @@
+require('dotenv').config();
 const passport = require("passport");
 const companyModel = require("../models/company/companyIndex.model");
 const { ExtractJwt } = require("passport-jwt");
 const JwtStrategy = require("passport-jwt").Strategy;
 
+const JWT_SECRET = process.env.JWT_SECRET;
+
 const opts = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-  secretOrKey: "1234", // It's recommended to use environment variables for secrets.
+  secretOrKey: JWT_SECRET, // It's recommended to use environment variables for secrets.
 };
 
 passport.use(

@@ -1,12 +1,10 @@
-// config/db.js
+require('dotenv').config();
 const mongoose = require("mongoose");
-
-// Replace with your MongoDB connection string
-const dbURI = "mongodb://127.0.0.1:27017/TTechCRM";
+const MONGO_URI = process.env.MONGO_URI;
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(dbURI);
+    await mongoose.connect(MONGO_URI);
     console.log("Connected to the database");
   } catch (err) {
     console.error("Database connection error:", err);

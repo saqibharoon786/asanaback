@@ -3,12 +3,16 @@ const mongoose = require("mongoose");
 const userSchema = new mongoose.Schema(
   {
     name: { type: String },
+    userId: { type: String },
     email: { type: String, required: true, unique: true },
     password: { type: String },
-    image: { type: Object },
     contact: { type: String },
     address: { type: String },
-    admin: { type: Boolean, default: false },
+    image: {  filePath: { type: String}},
+    department: {
+        type: String,
+        enum: ["Admin", "HR", "Sales","IT","Web Development"],
+    },
     deleted: { type: Boolean, default: false }  // Status field for soft delete
   },
   {
