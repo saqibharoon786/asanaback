@@ -1,39 +1,23 @@
 const express = require("express");
 const companyModel = require("../../models/company/companyIndex.model");
+
 const addProduct = async (req, res) => {
   try {
     const {
       product_Name,
-      product_Price,
+      product_CostPrice,
+      product_SellingPrice,
       product_StockQuantity,
       product_Category,
       product_Description,
       product_DateOfPurchase,
       product_DamagedPieces,
       product_StockLocation,
+      product_Image,
       product_Vendor,
     } = req.body;
 
-    if (
-      !product_Name ||
-      !product_Price ||
-      !product_Description ||
-      !product_StockQuantity ||
-      !product_Category ||
-      !product_DateOfPurchase ||
-      !product_StockLocation ||
-      !product_Vendor ||
-      !product_Vendor.vendor_Name ||
-      !product_Vendor.vendor_Email ||
-      !product_Vendor.vendor_Address ||
-      !product_Vendor.vendor_Contact
-    ) {
-      return res.status(400).json({
-        success: false,
-        status: 400,
-        message: "All fields required",
-      });
-    }
+   
 
     // Check if the product already exists in the Product collection
     const existingProduct = await companyModel.Product.findOne({
@@ -50,10 +34,12 @@ const addProduct = async (req, res) => {
     // Create a new product
     const newProduct = await companyModel.Product.create({
       product_Name,
-      product_Price,
+      product_CostPrice,
+      product_SellingPrice,
       product_Description,
       product_StockQuantity,
       product_Category,
+      product_Image,
       product_DateOfPurchase,
       product_DamagedPieces: product_DamagedPieces || 0, // Default to 0 if not provided
       product_StockLocation,

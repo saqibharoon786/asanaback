@@ -4,7 +4,8 @@ const companyModel = require("../../models/company/companyIndex.model");
 const createQuote = async (req, res) => {
   try {
     const user = req.user;
-    const name = req.user.name;
+    const name = user ? user.name : 'Unknown';
+
     var quote_TotalPrice = 0;
     var tax = 0.05;
 
@@ -348,11 +349,11 @@ const getQuoteByEmail = async (req, res) => {
 const quote = {
   createQuote,
   getAllQuotes,
-  getQuoteById,
-  acceptQuoteById,
-  deleteQuote,
-  //User
-  getQuoteByEmail
+  // getQuoteById,
+  // acceptQuoteById,
+  // deleteQuote,
+  // //User
+  // getQuoteByEmail
 };
 
 module.exports = quote;

@@ -4,7 +4,7 @@ const login = require("./login.route");
 const signup = require("./signup.route");
 const admin = require("./admin/adminIndex.route")
 const hr = require("./hr/hrIndex")
-// const sales = require("./sales/salesIndex.route")
+const sales = require("./sales/salesIndex.route")
 
 
 // const department = require("./department.route");
@@ -20,7 +20,7 @@ const hr = require("./hr/hrIndex")
 router.use("/login", login);
 router.use("/signup", signup);
 router.use("/admin", admin);
-// router.use("/sales", sales);
+router.use("/sales", sales);
 router.use("/hr", hr);
 
 // router.use("/project", project);

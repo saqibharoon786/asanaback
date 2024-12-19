@@ -6,7 +6,11 @@ const productSchema = new mongoose.Schema(
     product_Name: {
       type: String,
     },
-    product_Price: {
+    product_CostPrice: {
+      type: Number,
+    },
+
+    product_SellingPrice: {
       type: Number,
     },
     
@@ -30,6 +34,11 @@ const productSchema = new mongoose.Schema(
     product_StockLocation: {
       type: String,
     },
+    product_Image: {
+      filePath: { type: String },
+    },
+  
+    deleted: { type: Boolean, default: false },
     product_Vendor: {
       vendor_Name: { type: String },
       vendor_Email: { type: String },
