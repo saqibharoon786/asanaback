@@ -13,7 +13,7 @@ const productSchema = new mongoose.Schema(
     product_SellingPrice: {
       type: Number,
     },
-    
+
     product_StockQuantity: {
       type: Number,
     },
@@ -37,7 +37,7 @@ const productSchema = new mongoose.Schema(
     product_Image: {
       filePath: { type: String },
     },
-  
+
     deleted: { type: Boolean, default: false },
     product_Vendor: {
       vendor_Name: { type: String },

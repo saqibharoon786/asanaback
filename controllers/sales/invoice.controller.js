@@ -1,4 +1,3 @@
-const express = require("express");
 const companyModel = require("../../models/company/companyIndex.model");
 
 // Create an Invoice
@@ -119,12 +118,12 @@ const createInvoice = async (req, res) => {
 };
 
 
-const getAllInvoice = async (req, res) => {
+const getAllInvoices = async (req, res) => {
   try {
     // Fetch all Invoice
-    var Invoice = await companyModel.Invoice.find();
+    var Invoices = await companyModel.Invoice.find({ deleted: false });
 
-    if (!Invoice || Invoice.length === 0) {
+    if (!Invoices || Invoices.length === 0) {
       return res.status(200).json({
         success: true,
         status: 200,
@@ -140,7 +139,7 @@ const getAllInvoice = async (req, res) => {
       status: 200,
       message: "Invoice retrieved successfully",
       information: {
-        Invoice,
+        Invoices,
       },
     });
   } catch (error) {
@@ -191,38 +190,40 @@ const getInvoiceById = async (req, res) => {
   }
 };
 
-
-const getInvoiceByEmail = async (req, res) => {
+const setPaidInvoicebyId = async (req, res) => {
   try {
     const user = req.user;
-    const email = user.email;
+    const { invoiceId } = req.params;
 
     // Fetch the invoice by ID using findById
-    var invoices = await companyModel.Invoice.find({"invoice_Creater.email" : email});
+    var invoice = await companyModel.Invoice.findById(invoiceId);
 
     // If no invoice is found, return a message with an empty array
-    if (!invoices) {
-      return res.status(200).json({
-        success: true,
+    if (!invoice) {
+      return res.status(404).json({
+        success: false,
         status: 404,
-        message: "No Invoices found",
+        message: "No Invoice found",
         information: {
           invoice: [],
         },
       });
     }
 
-    // If invoice is found, return it in the response
+    invoice.invoice_Details.status = "Paid";
+    await invoice.save();
+
+    // Return a success message with the updated invoice
     return res.status(200).json({
       success: true,
       status: 200,
-      message: "invoice retrieved successfully",
+      message: "Invoice paid successfully",
       information: {
-        invoices, // Wrap in an array to maintain consistency
+        invoice, 
       },
     });
   } catch (error) {
-    console.error("Error fetching Invoices:", error);
+    console.error("Error updating invoice:", error);
     return res.status(500).json({
       success: false,
       status: 500,
@@ -234,9 +235,9 @@ const getInvoiceByEmail = async (req, res) => {
 
 const invoice = {
   createInvoice,
-  getAllInvoice,
+  getAllInvoices,
   getInvoiceById,
-  getInvoiceByEmail
+  setPaidInvoicebyId
 }
 
 module.exports = invoice;

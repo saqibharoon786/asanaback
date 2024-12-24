@@ -4,7 +4,6 @@ const controller = require("../../controllers/index.controller");
 const passport = require("../../middleware/passportAuth.middleware");
 const middleware = require("../../middleware/index.middleware");
 
-// Admin routes
 router.post(
   "/create-quote",
   passport.authenticate("jwt", { session: false }),
@@ -19,26 +18,26 @@ router.get(
   controller.salesController.quote.getAllQuotes
 );
 
-// router.get(
-//   "/:quoteId",
-//   // passport.authenticate("jwt", { session: false }),
-//   // middleware.salesRoleCheck,
-//   controller.quote.getQuoteById
-// );
+router.get(
+  "/:quoteId",
+  passport.authenticate("jwt", { session: false }),
+  middleware.salesRoleCheck,
+  controller.salesController.quote.getQuoteById
+);
 
-// router.patch(
-//   "/accept/:quoteId",
-//   // passport.authenticate("jwt", { session: false }),
-//   // middleware.salesRoleCheck,
-//   controller.quote.acceptQuoteById
-// );
+router.patch(
+  "/approve/:quoteId",
+  passport.authenticate("jwt", { session: false }),
+  middleware.salesRoleCheck,
+  controller.salesController.quote.approveQuoteById
+);
 
-// router.delete(
-//   "/delete/:quoteId",
-//   // passport.authenticate("jwt", { session: false }),
-//   // middleware.salesRoleCheck,
-//   controller.quote.deleteQuote,
-// );
+router.delete(
+  "/delete/:quoteId",
+  passport.authenticate("jwt", { session: false }),
+  middleware.salesRoleCheck,
+  controller.salesController.quote.deleteQuote,
+);
 
 // //User Routes
 

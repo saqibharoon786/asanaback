@@ -1,13 +1,14 @@
 const express = require("express");
 const companyModel = require("../models/company/companyIndex.model");
 const bcrypt = require("bcrypt");
+const utils = require("../utils/utilsIndex");
 
 // Variables
 const saltRounds = 10;
 
 const signUp = async (req, res) => {
   try {
-    const { name, email, password, contact, admin } = req.body; // Ensure all fields are included
+    const { name, email, password, contact } = req.body; // Ensure all fields are included
 
     // Check for required fields
     if (!name || !email || !password || !contact) {
@@ -30,14 +31,16 @@ const signUp = async (req, res) => {
 
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const userId = await utils.generateUniqueUserId(name);
 
     // Create a new user with the hashed password and append the role
     const newUser = await companyModel.User.create({
       name,
+      userId,
       email,
       password: hashedPassword,
       contact,
-      department: "Admin", 
+      department: "Admin",
     });
 
     // Return a success message with the necessary user details

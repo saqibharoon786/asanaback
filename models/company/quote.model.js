@@ -9,13 +9,13 @@ const quoteSchema = new mongoose.Schema(
     quote_Creater: {
       name: { type: String },
       email: { type: String },
-      phone: { type: String }
+      contact: { type: String }
     },
     quote_Client: {
-      name: { type: String },
-      email: { type: String },
-      contact: { type: String },
-      address: { type: String }
+      client_Name: { type: String },
+      client_Email: { type: String },
+      client_Contact: { type: String },
+      client_Address: { type: String },
     },
     quote_Products: [
       {
@@ -47,7 +47,7 @@ const quoteSchema = new mongoose.Schema(
       dateCreated: { type: Date, default: Date.now },
       status: {
         type: String,
-        enum: ["Pending", "Accepted", "Rejected"],
+        enum: ["Pending", "Approved", "Rejected"],
         default: "Pending",
       },
     },

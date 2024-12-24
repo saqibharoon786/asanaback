@@ -9,13 +9,13 @@ const invoiceSchema = new mongoose.Schema(
    invoice_Creater: {
       name: { type: String },
       email: { type: String },
-      phone: { type: String }
+      contact: { type: String }
     },
    invoice_Client: {
-      name: { type: String },
-      email: { type: String },
-      contact: { type: String },
-      address: { type: String }
+      client_Name: { type: String },
+      client_Email: { type: String },
+      client_Contact: { type: String },
+      client_Address: { type: String }
     },
    invoice_Products: [
       {
@@ -47,8 +47,8 @@ const invoiceSchema = new mongoose.Schema(
       dateCreated: { type: Date, default: Date.now },
       status: {
         type: String,
-        enum: [ "Pending","Accepted", "Rejected"],
-        default: "Pending",
+        enum: [ "Paid","Unpaid"],
+        default: "Unpaid",
       },
     },
     deleted: { type: Boolean, default: false }

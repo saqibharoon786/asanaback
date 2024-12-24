@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema(
     image: {  filePath: { type: String}},
     department: {
         type: String,
-        enum: ["Admin", "HR", "Sales","IT","Web Development"],
+        enum: ["Admin", "HR", "Sales", "IT", "Web Development"],
     },
     deleted: { type: Boolean, default: false }  // Status field for soft delete
   },

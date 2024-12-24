@@ -8,6 +8,12 @@ const leadSchema = new mongoose.Schema(
       email: { type: String },
       phone: { type: String }
     },
+    lead_Client: {
+      client_Name: { type: String },
+      client_Email: { type: String },
+      client_Address: { type: String },
+      client_Contact: { type: Number },
+    },
     lead_Name: {
       type: String,
     },
@@ -29,12 +35,15 @@ const leadSchema = new mongoose.Schema(
     lead_Reviews: [{
       type: String,
     }],
-    lead_Client: {
-      client_Name: { type: String },
-      client_Email: { type: String },
-      client_Address: { type: String },
-      client_Contact: { type: Number },
+    lead_Details: {
+      dateCreated: { type: Date, default: Date.now },
+      status: {
+        type: String,
+        enum: ["Pending", "Approved", "Rejected"],
+        default: "Pending",
+      },
     },
+    deleted: { type: Boolean, default: false }  // Status field for soft delete,
   },
   { timestamps: true }
 );

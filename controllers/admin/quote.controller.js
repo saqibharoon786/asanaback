@@ -4,7 +4,6 @@ const companyModel = require("../../models/company/companyIndex.model");
 const createQuote = async (req, res) => {
   try {
     const user = req.user;
-    const name = req.user.name;
     var quote_TotalPrice = 0;
     var tax = 0.05;
 
@@ -13,16 +12,7 @@ const createQuote = async (req, res) => {
     var product_DiscountedAmount = 0;
 
     // Destructure data from request body
-    var { quote_Creater, quote_Client, quote_Products, quote_Details } = req.body;
-
-    // Validation: Check if the client and products are provided
-    if (!quote_Creater || !quote_Client || !quote_Products || quote_Products.length === 0) {
-      return res.status(400).json({
-        success: false,
-        status: 400,
-        message: "Creator details, client details, and at least one product are required.",
-      });
-    }
+    var { quote_Client, quote_Products, quote_Details } = req.body;
 
     // Loop through each product in quote_Products array
     for (var item of quote_Products) {
@@ -53,6 +43,11 @@ const createQuote = async (req, res) => {
 
       quote_TotalPrice += item.product_FinalAmount;
     }
+
+    // Get the total count of quotes created by this user
+    var quoteCount = await companyModel.Quote.countDocuments();
+    var quote_Identifier = `${user.userId}-${quoteCount + 1}`;
+
     // Prepare quote details
     var newQuoteDetails = {
       dateCreated: new Date(),
@@ -61,26 +56,17 @@ const createQuote = async (req, res) => {
 
     // Create a new quote document
     var newQuote = await companyModel.Quote.create({
-      quote_Creater,
+      quote_Identifier, // Add the quote identifier here
+      quote_Creater: {
+        name: user.name,
+        email: user.email,
+        contact: user.contact,
+      },
       quote_Client,
       quote_Products,
       quote_TotalPrice,
       quote_Details: newQuoteDetails,
     });
-
-    var quote_Identifier;
-
-    if (name) {
-      const namePart = name.substring(0, 2).toUpperCase(); // Get first two characters of the name and convert to uppercase
-      const idPart = newQuote._id.toString().slice(-4);  // Get last 4 characters of the newQuote._id
-      quote_Identifier = `${namePart}-${idPart}`;
-    } else {
-      quote_Identifier = newQuote._id.toString();
-    }
-    
-    // Attach the identifier to the document (if needed)
-    newQuote.quote_Identifier = quote_Identifier;
-    await newQuote.save();
 
     // Send response with the created quote
     return res.status(200).json({
@@ -104,7 +90,7 @@ const createQuote = async (req, res) => {
 const getAllQuotes = async (req, res) => {
   try {
     // Fetch all Quotes
-    var quotes = await companyModel.Quote.find();
+    var quotes = await companyModel.Quote.find({ deleted: false });
 
     if (!quotes || quotes.length === 0) {
       return res.status(200).json({
@@ -174,8 +160,9 @@ const getQuoteById = async (req, res) => {
 };
 
 
-const acceptQuoteById = async (req, res) => {
+const approveQuoteById = async (req, res) => {
   try {
+    const user = req.user;
     const { quoteId } = req.params;
 
     // Fetch the quote by ID using findById
@@ -191,7 +178,7 @@ const acceptQuoteById = async (req, res) => {
     }
 
     // Ensure the quote is not already accepted
-    if (quote.quote_Details.status === "Accepted") {
+    if (quote.quote_Details.status === "Approved") {
       return res.status(400).json({
         success: false,
         status: 400,
@@ -199,8 +186,7 @@ const acceptQuoteById = async (req, res) => {
       });
     }
 
-    // Update the quote's status to "Accepted"
-    quote.quote_Details.status = "Accepted";
+    quote.quote_Details.status = "Approved";
 
     // Save the updated quote
     const updatedQuote = await quote.save();
@@ -222,7 +208,7 @@ const acceptQuoteById = async (req, res) => {
       invoice_Products: quote.quote_Products,
       invoice_TotalPrice: quote.quote_TotalPrice,
       invoice_Details: {
-        status: "Accepted",
+        status: "Unpaid",
         dateCreated: Date.now(),
       },
     };
@@ -245,7 +231,7 @@ const acceptQuoteById = async (req, res) => {
     return res.status(200).json({
       success: true,
       status: 200,
-      message: "Quote Accepted and Invoice Created successfully",
+      message: "Quote Approved and Invoice Created successfully",
       information: {
         quote: updatedQuote,
         invoice: savedInvoice,
@@ -291,7 +277,7 @@ const deleteQuote = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Quote marked as deleted successfully."
+      message: "Quote deleted successfully."
     });
   } catch (error) {
     console.error("Error deleting quote:", error);
@@ -301,9 +287,6 @@ const deleteQuote = async (req, res) => {
     });
   }
 };
-
-//User
-
 
 //User Controllers
 const getQuoteByEmail = async (req, res) => {
@@ -345,14 +328,56 @@ const getQuoteByEmail = async (req, res) => {
   }
 };
 
+
+
+
+const getCustomers = async (req, res) => {
+  try {
+    const user = req.user;
+    const email = user.email;
+
+    // Fetch the quote by ID using findById
+    var quotes = await companyModel.Quote.find({"quote_Creater.email" : email});
+
+    // If no quote is found, return a message with an empty array
+    if (!quotes) {
+      return res.status(200).json({
+        success: true,
+        status: 404,
+        message: "No Quote found",
+        information: {
+          quote: [],
+        },
+      });
+    }
+
+    // If quote is found, return it in the response
+    return res.status(200).json({
+      success: true,
+      status: 200,
+      message: "Quote retrieved successfully",
+      information: {
+        quotes, // Wrap in an array to maintain consistency
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching Quote:", error);
+    return res.status(500).json({
+      success: false,
+      status: 500,
+      message: error.message,
+    });
+  }
+};
+
+
 const quote = {
   createQuote,
   getAllQuotes,
   getQuoteById,
-  acceptQuoteById,
+  approveQuoteById,
   deleteQuote,
-  //User
-  getQuoteByEmail
+  
 };
 
 module.exports = quote;

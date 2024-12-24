@@ -10,14 +10,14 @@ router.post(
   "/add-product",
   passport.authenticate("jwt", { session: false }),
   middleware.adminRoleCheck,
-  upload.single('product_Image'),
-  controller.adminController.product.addProduct,
+  upload.single("product_Image"),
+  controller.adminController.product.addProduct
 );
 
 router.get(
   "/get-products",
-  // passport.authenticate("jwt", { session: false }),
-  // middleware.adminRoleCheck,
+  passport.authenticate("jwt", { session: false }),
+  middleware.adminRoleCheck,
   controller.adminController.product.getAllProducts
 );
 
@@ -28,18 +28,13 @@ router.delete(
   controller.adminController.product.deleteProduct
 );
 
-
-
 router.patch(
-  "/update-product/:id",
+  "/update-product/:productId",
   passport.authenticate("jwt", { session: false }),
   middleware.adminRoleCheck,
-  upload.single('employee_Image'),
+  upload.single("product_Image"),
   controller.adminController.product.updateProduct
 );
-
-
-
 
 router.get(
   "/get-product/:productId",
@@ -47,9 +42,6 @@ router.get(
   middleware.adminRoleCheck,
   controller.adminController.product.getProductInformation
 );
-
-
-
 
 // router.post(
 //   "/user/add-product",

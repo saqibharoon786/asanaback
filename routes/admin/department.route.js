@@ -5,7 +5,7 @@ const upload = require("../../config/multer");
 const passport = require("../../middleware/passportAuth.middleware");
 const middleware = require("../../middleware/index.middleware");
 
-// Admin routes
+// Admin Department routes
 router.post(
   "/add-department",
   passport.authenticate("jwt", { session: false }),
@@ -56,13 +56,5 @@ router.get(
   middleware.adminRoleCheck,
   controller.adminController.department.getEmployeeInformation
 );
-
-// // Uer Routes 
-// router.get(
-//   "/user-department",
-//   // passport.authenticate("jwt", { session: false }),
-//   // middleware.userRoleCheck,
-//   controller.department.getUserDepartments
-// );
 
 module.exports = router;

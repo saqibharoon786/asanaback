@@ -1,17 +1,17 @@
 // var department = require("./department.controller");
 // var project = require("./project.controller");
-// var product = require("./product.controller");
+var product = require("./product.controller");
 var quote = require ("./quote.controller");
-// var lead = require("./lead.controller");
-// var invoice = require("./invoice.controller");
+var lead = require("./lead.controller");
+var invoice = require("./invoice.controller");
 
 var salesController = {
 //   department,
 //   project,
-//   product,
+  product,
   quote,
-//   lead,
-//   invoice,
+  lead,
+  invoice,
 };
 
 module.exports = salesController;

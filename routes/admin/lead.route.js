@@ -1,28 +1,44 @@
-// const express = require("express");
-// const router = express.Router();
-// const controller = require("../controllers/index.controller");
-// const passport = require("../middleware/passportAuth.middleware");
-// const middleware = require("../middleware/index.middleware");
+const express = require("express");
+const router = express.Router();
+const controller = require("../../controllers/index.controller");
+const upload = require("../../config/multer");
+const passport = require("../../middleware/passportAuth.middleware");
+const middleware = require("../../middleware/index.middleware");
 
-// // Admin routes
-// router.get(
-//   "/all-leads",
-//   // passport.authenticate("jwt", { session: false }),
-//   // middleware.adminRoleCheck,
-//   controller.lead.getAllLeads
-// );
+router.post(
+  "/create-lead",
+  passport.authenticate("jwt", { session: false }),
+  middleware.adminRoleCheck,
+  controller.adminController.lead.createLead
+);
 
-// router.post(
-//   "/create-lead",
-//   // passport.authenticate("jwt", { session: false }),
-//   // middleware.adminRoleCheck,
-//   controller.lead.createLead
-// );
+router.get(
+  "/all-leads",
+  passport.authenticate("jwt", { session: false }),
+  middleware.adminRoleCheck,
+  controller.adminController.lead.getAllLeads
+);
 
-// router.get(
-//   '/:leadId',
-//   // passport.authenticate('jwt', { session: false }),
-//   // middleware.adminRoleCheck,
-//   controller.lead.getLeadById)
+router.get(
+  '/:leadId',
+  passport.authenticate('jwt', { session: false }),
+  middleware.adminRoleCheck,
+  controller.adminController.lead.getLeadById
+)
 
-// module.exports = router;
+router.patch(
+  "/approve/:leadId",
+  passport.authenticate("jwt", { session: false }),
+  middleware.adminRoleCheck,
+  controller.adminController.lead.approveLeadById
+);
+
+router.delete(
+  "/delete/:leadId",
+  passport.authenticate("jwt", { session: false }),
+  middleware.adminRoleCheck,
+  controller.adminController.lead.deleteLead,
+);
+
+
+module.exports = router;

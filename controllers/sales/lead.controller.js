@@ -3,7 +3,7 @@ const companyModel = require("../../models/company/companyIndex.model"); // Adju
 
 const getAllLeads = async (req, res) => {
   try {
-    const allLeads = await companyModel.Lead.find();
+    const allLeads = await companyModel.Lead.find({ deleted: false });
     return res.status(201).json({
       success: true,
       status: 201,
@@ -35,31 +35,6 @@ const createLead = async (req, res) => {
       lead_Reviews,
       lead_Client,
     } = req.body;
-
-    // Validate required fields
-    if (
-      !lead_Name ||
-      !lead_Creater ||
-      !lead_Creater.name ||
-      !lead_Creater.email ||
-      !lead_Creater.phone ||
-      !lead_Scope ||
-      !lead_InstallationTime ||
-      !lead_ProblemDefinition ||
-      !lead_BankTransfer ||
-      !lead_DateMentioned ||
-      !lead_Client ||
-      !lead_Client.client_Name ||
-      !lead_Client.client_Email ||
-      !lead_Client.client_Address ||
-      !lead_Client.client_Contact
-    ) {
-      return res.status(400).json({
-        success: false,
-        status: 400,
-        message: "All fields are required",
-      });
-    }
 
     // Check if a similar lead already exists (based on client name and scope)
     const existingLead = await companyModel.Lead.findOne({
@@ -137,10 +112,96 @@ const getLeadById = async (req, res) => {
   }
 };
 
+
+
+
+const deleteLead = async (req, res) => {
+  try {
+    const { leadId } = req.params;
+
+    if (!leadId) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide the lead ID.",
+      });
+    }
+
+    // Find the lead by ID and mark it as deleted
+    const lead = await companyModel.Lead.findById(leadId);
+    if (!lead) {
+      return res.status(404).json({
+        success: false,
+        message: "Lead not found.",
+      });
+    }
+
+    // Mark the lead as deleted by updating the 'deleted' field to true
+    await companyModel.Lead.updateOne(
+      { _id: leadId },
+      { $set: { deleted: true } }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Lead deleted successfully.",
+    });
+  } catch (error) {
+    console.error("Error deleting lead:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "An error occurred while deleting the lead.",
+    });
+  }
+};
+
+const approveLeadById = async (req, res) => {
+  try {
+    const user = req.user;
+    const { leadId } = req.params;
+
+    // Fetch the lead by ID using findById
+    const lead = await companyModel.Lead.findById(leadId);
+
+    // Ensure the lead is not already accepted
+    if (lead.lead_Details.status === "Approved") {
+      return res.status(400).json({
+        success: false,
+        status: 400,
+        message: "Lead has already been approved.",
+      });
+    }
+
+    lead.lead_Details.status = "Approved";
+    const updatedLead = await lead.save();
+
+    // Return the success response with both quote and invoice details
+    return res.status(200).json({
+      success: true,
+      status: 200,
+      message: "Lead Approved and Invoice Created successfully",
+      information: {
+        lead: updatedLead,
+      },
+    });
+  } catch (error) {
+    console.error("Error in accepting quote:", error);
+
+    // Improved error message
+    return res.status(500).json({
+      success: false,
+      status: 500,
+      message: error.message || "An error occurred while processing the quote.",
+    });
+  }
+};
+
+
 const lead = {
   createLead,
   getAllLeads,
-  getLeadById
+  getLeadById,
+  deleteLead,
+  approveLeadById
 };
 
 module.exports = lead;

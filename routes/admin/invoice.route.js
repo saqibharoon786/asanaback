@@ -1,44 +1,43 @@
-// const express = require("express");
-// const router = express.Router();
-// const controller = require("../../controllers/index.controller");
-// const passport = require("../../middleware/passportAuth.middleware");
-// const middleware = require("../../middleware/index.middleware");
+const express = require("express");
+const router = express.Router();
+const controller = require("../../controllers/index.controller");
+const upload = require("../../config/multer");
+const passport = require("../../middleware/passportAuth.middleware");
+const middleware = require("../../middleware/index.middleware");
 
-// // Admin routes
-// router.post(
-//   "/create-invoice",
-//   // passport.authenticate("jwt", { session: false }),
-//   // middleware.adminRoleCheck,
-//   controller.invoice.createInvoice
-// );
+router.post(
+  "/create-invoice",
+  passport.authenticate("jwt", { session: false }),
+  middleware.adminRoleCheck,
+  controller.adminController.invoice.createInvoice
+);
 
-// router.get(
-//   "/get-invoices",
-//   // passport.authenticate("jwt", { session: false }),
-//   // middleware.adminRoleCheck,
-//   controller.invoice. getAllInvoice
-// );
-// router.get(
-//   "/:invoiceId", 
-//   // passport.authenticate("jwt", { session: false }), 
-//   // middleware.adminRoleCheck, 
-//   controller.invoice.getInvoiceById 
-// );
+router.get(
+  "/get-invoices",
+  passport.authenticate("jwt", { session: false }),
+  middleware.adminRoleCheck,
+  controller.adminController.invoice.getAllInvoices
+);
 
-// // ---------------------------User--------------------
-// router.get(
-//   "/user/get-invoices-by-email",
-//   // passport.authenticate("jwt", { session: false }),
-//   // middleware.userRoleCheck,
-//   controller.invoice.getInvoiceByEmail
+router.patch(
+  "/set-paid/:invoiceId",
+  passport.authenticate("jwt", { session: false }),
+  middleware.adminRoleCheck,
+  controller.adminController.invoice.setPaidInvoicebyId
+);
 
-// );
+router.get(
+  "/:invoiceId", 
+  passport.authenticate("jwt", { session: false }), 
+  middleware.adminRoleCheck, 
+  controller.adminController.invoice.getInvoiceById 
+);
 
-// router.post(
-//   "/user/create-invoice",
-//   // passport.authenticate("jwt", { session: false }),
-//   // middleware.userRoleCheck  ,   
-//   controller.invoice.createInvoice
-// );
+router.delete(
+  "/delete/:invoiceId",
+  passport.authenticate("jwt", { session: false }),
+  middleware.adminRoleCheck,
+  controller.adminController.invoice.deleteInvoice,
+);
 
-// module.exports = router;
+module.exports = router;

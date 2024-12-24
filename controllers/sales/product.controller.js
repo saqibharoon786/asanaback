@@ -1,78 +1,11 @@
 const express = require("express");
 const companyModel = require("../../models/company/companyIndex.model");
 
-const addProduct = async (req, res) => {
-  try {
-    const {
-      product_Name,
-      product_CostPrice,
-      product_SellingPrice,
-      product_StockQuantity,
-      product_Category,
-      product_Description,
-      product_DateOfPurchase,
-      product_DamagedPieces,
-      product_StockLocation,
-      product_Image,
-      product_Vendor,
-    } = req.body;
-
-   
-
-    // Check if the product already exists in the Product collection
-    const existingProduct = await companyModel.Product.findOne({
-      product_Name,
-    });
-    if (existingProduct) {
-      return res.status(409).json({
-        success: false,
-        status: 409,
-        message: "Product already exists",
-      });
-    }
-
-    // Create a new product
-    const newProduct = await companyModel.Product.create({
-      product_Name,
-      product_CostPrice,
-      product_SellingPrice,
-      product_Description,
-      product_StockQuantity,
-      product_Category,
-      product_Image,
-      product_DateOfPurchase,
-      product_DamagedPieces: product_DamagedPieces || 0, // Default to 0 if not provided
-      product_StockLocation,
-      product_Vendor: {
-        vendor_Name: product_Vendor.vendor_Name,
-        vendor_Email: product_Vendor.vendor_Email,
-        vendor_Address: product_Vendor.vendor_Address,
-        vendor_Contact: product_Vendor.vendor_Contact,
-      },
-    });
-
-    // Save the product to the database
-    await newProduct.save();
-    return res.status(201).json({
-      success: true,
-      status: 201,
-      message: "Product created successfully",
-      information: {
-        newProduct,
-      },
-    });
-  } catch (error) {
-    console.log("error:", error);
-    return res
-      .status(500)
-      .json({ success: false, status: 500, message: error.message });
-  }
-};
 
 
 const getAllProducts = async (req, res) => {
   try {
-    const Products = await companyModel.Product.find(); 
+    const Products = await companyModel.Product.find({ deleted: false }); 
 
     if (!Products || Products.length === 0) {
       return res.status(200).json({
@@ -102,9 +35,41 @@ const getAllProducts = async (req, res) => {
   }
 };
 
+
+const getProductInformation = async (req, res) => {
+  try {
+    const { Id } = req.params;
+
+    // Find product and populate vendor details
+    const product = await companyModel.Product.findOne({
+      Id,
+      deleted: false,
+    }).populate(
+      "product_Vendor",
+      "vendor_Name vendor_Email vendor_Contact Vendor Address"
+    );
+
+    if (!product) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Product information retrieved successfully",
+      information: product,
+    });
+  } catch (error) {
+    console.error("Error fetching product information:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 const project = {
-  addProduct,
+  
   getAllProducts,
+  getProductInformation,
 };
 
 module.exports = project;

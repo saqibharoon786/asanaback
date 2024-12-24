@@ -34,15 +34,15 @@ const addProduct = async (req, res) => {
     const newProduct = await companyModel.Product.create({
       product_Name,
       product_CostPrice,
-      product_SellingPrice, 
+      product_SellingPrice,
       product_Description,
       product_StockQuantity,
       product_Category,
       product_DateOfPurchase,
       product_DamagedPieces: product_DamagedPieces || 0, // Default to 0 if not provided
       product_StockLocation,
-      product_Image:{
-        filePath: product_ImagePath,  
+      product_Image: {
+        filePath: product_ImagePath,
       },
       deleted: false,
       product_Vendor: {
@@ -71,7 +71,6 @@ const addProduct = async (req, res) => {
   }
 };
 
-
 const getAllProducts = async (req, res) => {
   try {
     // Fetch products where deleted is false
@@ -80,11 +79,11 @@ const getAllProducts = async (req, res) => {
     if (!Products || Products.length === 0) {
       return res.status(200).json({
         success: true,
-        status: 200,             
+        status: 200,
         message: "No products found",
         information: {
-          products: []           
-        }
+          products: [],
+        },
       });
     }
 
@@ -94,7 +93,7 @@ const getAllProducts = async (req, res) => {
       status: 200,
       message: "All products fetched successfully",
       information: {
-        products: Products       
+        products: Products,
       },
     });
   } catch (error) {
@@ -113,7 +112,7 @@ const deleteProduct = async (req, res) => {
     if (!product_Name) {
       return res.status(400).json({
         success: false,
-        message: "Please provide the product name."
+        message: "Please provide the product name.",
       });
     }
 
@@ -124,7 +123,7 @@ const deleteProduct = async (req, res) => {
     if (!product) {
       return res.status(404).json({
         success: false,
-        message: "Product not found."
+        message: "Product not found.",
       });
     }
 
@@ -136,7 +135,7 @@ const deleteProduct = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Product marked as deleted successfully."
+      message: "Product marked as deleted successfully.",
     });
   } catch (error) {
     console.error("Error deleting product:", error);
@@ -147,12 +146,9 @@ const deleteProduct = async (req, res) => {
   }
 };
 
-
-
-
 const updateProduct = async (req, res) => {
   try {
-    const { id } = req.params; // The product ID we want to update
+    const { productId } = req.params;
     const {
       product_NewName,
       product_NewCostPrice,
@@ -167,7 +163,7 @@ const updateProduct = async (req, res) => {
     } = req.body;
 
     // Step 1: Find the product by its ID (should be `_id` in MongoDB)
-    const product = await companyModel.Product.findById(id); // Use findById to search by MongoDB's default `_id`
+    const product = await companyModel.Product.findById(productId); // Use findById to search by MongoDB's default `_id`
 
     if (!product) {
       return res.status(404).json({
@@ -177,29 +173,44 @@ const updateProduct = async (req, res) => {
     }
 
     // Step 2: Handle image update if a new one is provided
-    const product_ImagePath = req.file ? `/uploads/product/${req.file.filename}` : product.product_Image.filePath;
+    const newProduct_ImagePath = req.file
+      ? `/uploads/product/${req.file.filename}`
+      : product.product_Image.filePath;
 
     // Step 3: Update the product's fields with new values or retain old values if not provided
     product.product_Name = product_NewName || product.product_Name;
-    product.product_CostPrice = product_NewCostPrice || product.product_CostPrice;
-    product.product_SellingPrice = product_NewSellingPrice || product.product_SellingPrice;
-    product.product_StockQuantity = product_NewStockQuantity || product.product_StockQuantity;
+    product.product_CostPrice =
+      product_NewCostPrice || product.product_CostPrice;
+    product.product_SellingPrice =
+      product_NewSellingPrice || product.product_SellingPrice;
+    product.product_StockQuantity =
+      product_NewStockQuantity || product.product_StockQuantity;
     product.product_Category = product_NewCategory || product.product_Category;
-    product.product_Description = product_NewDescription || product.product_Description;
-    product.product_DateOfPurchase = product_NewDateOfPurchase || product.product_DateOfPurchase;
-    product.product_DamagedPieces = product_NewDamagedPieces || product.product_DamagedPieces;
-    product.product_StockLocation = product_NewStockLocation || product.product_StockLocation;
+    product.product_Description =
+      product_NewDescription || product.product_Description;
+    product.product_DateOfPurchase =
+      product_NewDateOfPurchase || product.product_DateOfPurchase;
+    product.product_DamagedPieces =
+      product_NewDamagedPieces || product.product_DamagedPieces;
+    product.product_StockLocation =
+      product_NewStockLocation || product.product_StockLocation;
+
+    // Update image path
+    product.product_Image.filePath = newProduct_ImagePath;
 
     // Update vendor information if provided
     if (product_NewVendor) {
-      product.product_Vendor.vendor_Name = product_NewVendor.vendor_Name || product.product_Vendor.vendor_Name;
-      product.product_Vendor.vendor_Email = product_NewVendor.vendor_Email || product.product_Vendor.vendor_Email;
-      product.product_Vendor.vendor_Address = product_NewVendor.vendor_Address || product.product_Vendor.vendor_Address;
-      product.product_Vendor.vendor_Contact = product_NewVendor.vendor_Contact || product.product_Vendor.vendor_Contact;
+      product.product_Vendor.vendor_Name =
+        product_NewVendor.vendor_Name || product.product_Vendor.vendor_Name;
+      product.product_Vendor.vendor_Email =
+        product_NewVendor.vendor_Email || product.product_Vendor.vendor_Email;
+      product.product_Vendor.vendor_Address =
+        product_NewVendor.vendor_Address ||
+        product.product_Vendor.vendor_Address;
+      product.product_Vendor.vendor_Contact =
+        product_NewVendor.vendor_Contact ||
+        product.product_Vendor.vendor_Contact;
     }
-
-    // Update the image path if a new image is uploaded
-    product.product_Image.filePath = product_ImagePath;
 
     // Step 4: Save the updated product to the database
     await product.save();
@@ -220,51 +231,35 @@ const updateProduct = async (req, res) => {
   }
 };
 
-
 const getProductInformation = async (req, res) => {
   try {
-    const { productId } = req.params; // The product ID from the request parameters
+    const { Id } = req.params;
 
-    // Step 1: Find the product by its productId
-    const product = await companyModel.Product.findOne({ _id: productId, deleted: false });
+    // Find product and populate vendor details
+    const product = await companyModel.Product.findOne({
+      Id,
+      deleted: false,
+    }).populate(
+      "product_Vendor",
+      "vendor_Name vendor_Email vendor_Contact Vendor Address"
+    );
 
     if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found",
-      });
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
     }
-
-    // Step 2: Find the category related to this product
-    const category = await companyModel.Category.findOne({ _id: product.product_Category });
-
-    // Step 3: Get the vendor information for this product
-    const vendor = await companyModel.Vendor.findOne({ _id: product.product_Vendor });
 
     return res.status(200).json({
       success: true,
-      status: 200,
-      message: "Product, Category, and Vendor information retrieved successfully",
-      information: {
-        product,
-        category: category?.category_Name, // Assuming category has a 'category_Name' field
-        vendor: vendor ? {
-          vendor_Name: vendor.vendor_Name,
-          vendor_Email: vendor.vendor_Email,
-          vendor_Contact: vendor.vendor_Contact,
-        } : null,
-      },
+      message: "Product information retrieved successfully",
+      information: product,
     });
-    
   } catch (error) {
     console.error("Error fetching product information:", error);
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
-
 
 const project = {
   addProduct,

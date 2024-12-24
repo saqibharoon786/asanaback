@@ -1,66 +1,44 @@
-// const express = require("express");
-// const router = express.Router();
-// const controller = require("../../controllers/index.controller");
-// const passport = require("../../middleware/passportAuth.middleware");
-// const middleware = require("../../middleware/index.middleware");
+const express = require("express");
+const router = express.Router();
+const controller = require("../../controllers/index.controller");
+const upload = require("../../config/multer");
+const passport = require("../../middleware/passportAuth.middleware");
+const middleware = require("../../middleware/index.middleware");
 
-// // Admin routes
-// router.post(
-//   "/create-quote",
-//   // passport.authenticate("jwt", { session: false }),
-//   // middleware.adminRoleCheck,
-//   controller.quote.createQuote
-// );
+// Admin routes
+router.post(
+  "/create-quote",
+  passport.authenticate("jwt", { session: false }),
+  middleware.adminRoleCheck,
+  controller.adminController.quote.createQuote
+);
 
-// router.get(
-//   "/get-quotes",
-//   // passport.authenticate("jwt", { session: false }),
-//   // middleware.adminRoleCheck,
-//   controller.quote.getAllQuotes
-// );
+router.get(
+  "/get-quotes",
+  passport.authenticate("jwt", { session: false }),
+  middleware.adminRoleCheck,
+  controller.adminController.quote.getAllQuotes
+);
 
-// router.get(
-//   "/:quoteId",
-//   // passport.authenticate("jwt", { session: false }),
-//   // middleware.adminRoleCheck,
-//   controller.quote.getQuoteById
-// );
+router.get(
+  "/:quoteId",
+  passport.authenticate("jwt", { session: false }),
+  middleware.adminRoleCheck,
+  controller.adminController.quote.getQuoteById
+);
 
-// router.patch(
-//   "/accept/:quoteId",
-//   // passport.authenticate("jwt", { session: false }),
-//   // middleware.adminRoleCheck,
-//   controller.quote.acceptQuoteById
-// );
+router.patch(
+  "/approve/:quoteId",
+  passport.authenticate("jwt", { session: false }),
+  middleware.adminRoleCheck,
+  controller.adminController.quote.approveQuoteById
+);
 
-// router.delete(
-//   "/delete/:quoteId",
-//   // passport.authenticate("jwt", { session: false }),
-//   // middleware.adminRoleCheck,
-//   controller.quote.deleteQuote,
-// );
+router.delete(
+  "/delete/:quoteId",
+  passport.authenticate("jwt", { session: false }),
+  middleware.adminRoleCheck,
+  controller.adminController.quote.deleteQuote
+);
 
-// //User Routes
-
-// router.post(
-//   "/user/create-quote",
-//   passport.authenticate("jwt", { session: false }),
-//   middleware.userRoleCheck,
-//   controller.quote.createQuote
-// );
-
-// router.get(
-//   "/user/get-quotes-by-email",
-//   passport.authenticate("jwt", { session: false }),
-//   middleware.userRoleCheck,
-//   controller.quote.getQuoteByEmail
-// );
-
-// router.get(
-//   "/user/:quoteId",
-//   passport.authenticate("jwt", { session: false }),
-//   middleware.userRoleCheck,
-//   controller.quote.getQuoteById
-// );
-
-// module.exports = router;
+module.exports = router;
