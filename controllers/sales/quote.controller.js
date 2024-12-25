@@ -164,6 +164,8 @@ const approveQuoteById = async (req, res) => {
   try {
     const user = req.user;
     const { quoteId } = req.params;
+
+    // Fetch the quote by ID using findById
     const quote = await companyModel.Quote.findById(quoteId);
 
     // If no quote is found, return a message with an empty array
@@ -185,8 +187,6 @@ const approveQuoteById = async (req, res) => {
     }
 
     quote.quote_Details.status = "Approved";
-
-    // Save the updated quote
     const updatedQuote = await quote.save();
     
     // Check if the quote save was successful
@@ -198,9 +198,8 @@ const approveQuoteById = async (req, res) => {
       });
     }
 
-    // Prepare the invoice data from the quote
-    const invoiceData = {
-      invoice_Identifier: quote.quote_Identifier,  // You can modify this if needed to generate a new invoice ID
+    const newInvoice = await companyModel.Invoice.create({
+      invoice_Identifier: quote.quote_Identifier,
       invoice_Creater: quote.quote_Creater,
       invoice_Client: quote.quote_Client,
       invoice_Products: quote.quote_Products,
@@ -209,18 +208,16 @@ const approveQuoteById = async (req, res) => {
         status: "Unpaid",
         dateCreated: Date.now(),
       },
-    };
-
-    const newInvoice = await companyModel.Invoice.create(invoiceData);
-        const savedInvoice = await newInvoice.save();
-
-    // If invoice creation failed
-    if (!savedInvoice) {
-      return res.status(500).json({
-        success: false,
-        status: 500,
-        message: "Failed to create invoice",
-      });
+    });
+    
+    // Correcting the loop to update product stock quantities
+    for (const item of newInvoice.invoice_Products) {
+      const product = await companyModel.Product.findOne({ product_Name: item.product, deleted: false });
+    
+      if (product) {
+        product.product_StockQuantity -= item.quantity; 
+        await product.save(); 
+      }
     }
 
     // Return the success response with both quote and invoice details
@@ -230,7 +227,7 @@ const approveQuoteById = async (req, res) => {
       message: "Quote Approved and Invoice Created successfully",
       information: {
         quote: updatedQuote,
-        invoice: savedInvoice,
+        invoice: newInvoice,
       },
     });
   } catch (error) {

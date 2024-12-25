@@ -22,7 +22,7 @@ router.get(
 );
 
 router.delete(
-  "/delete-product",
+  "/delete-product/:productId",
   passport.authenticate("jwt", { session: false }),
   middleware.adminRoleCheck,
   controller.adminController.product.deleteProduct

@@ -20,8 +20,10 @@ const addProduct = async (req, res) => {
 
     // Check if the product already exists in the Product collection
     const existingProduct = await companyModel.Product.findOne({
-      product_Name,
+      product_Name: product_Name,
+      deleted: false,
     });
+    
     if (existingProduct) {
       return res.status(409).json({
         success: false,
@@ -106,31 +108,23 @@ const getAllProducts = async (req, res) => {
 
 const deleteProduct = async (req, res) => {
   try {
-    const { product_Name } = req.body;
+    const { productId } = req.params;
 
-    // Ensure product name is provided
-    if (!product_Name) {
-      return res.status(400).json({
-        success: false,
-        message: "Please provide the product name.",
-      });
-    }
+    // Find the product by productId
+    const product = await companyModel.Product.findById( productId );
 
-    // Find the product by its name
-    const product = await companyModel.Product.findOne({ product_Name });
-
-    // If the product doesn't exist
     if (!product) {
+      // If product is not found, return 404
       return res.status(404).json({
         success: false,
         message: "Product not found.",
       });
     }
-
-    // Mark the product as deleted (soft delete)
+    
+    // Mark the product as deleted by updating the `deleted` field
     await companyModel.Product.updateOne(
-      { product_Name }, // Find the product by its name
-      { $set: { deleted: true } } // Update the 'deleted' field to true
+      { _id : productId }, 
+      { $set: { deleted: true } }
     );
 
     return res.status(200).json({
@@ -145,6 +139,8 @@ const deleteProduct = async (req, res) => {
     });
   }
 };
+
+
 
 const updateProduct = async (req, res) => {
   try {
@@ -162,9 +158,8 @@ const updateProduct = async (req, res) => {
       product_NewVendor,
     } = req.body;
 
-    // Step 1: Find the product by its ID (should be `_id` in MongoDB)
-    const product = await companyModel.Product.findById(productId); // Use findById to search by MongoDB's default `_id`
 
+    const product = await companyModel.Product.findByIdAndUpdate(productId);
     if (!product) {
       return res.status(404).json({
         success: false,
@@ -177,7 +172,8 @@ const updateProduct = async (req, res) => {
       ? `/uploads/product/${req.file.filename}`
       : product.product_Image.filePath;
 
-    // Step 3: Update the product's fields with new values or retain old values if not provided
+    console.log("New Image Path:", newProduct_ImagePath);
+
     product.product_Name = product_NewName || product.product_Name;
     product.product_CostPrice =
       product_NewCostPrice || product.product_CostPrice;
@@ -231,33 +227,50 @@ const updateProduct = async (req, res) => {
   }
 };
 
+
 const getProductInformation = async (req, res) => {
   try {
-    const { Id } = req.params;
-
-    // Find product and populate vendor details
-    const product = await companyModel.Product.findOne({
-      Id,
-      deleted: false,
-    }).populate(
-      "product_Vendor",
-      "vendor_Name vendor_Email vendor_Contact Vendor Address"
-    );
-
-    if (!product) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Product not found" });
+    // Destructure and validate the ID parameter
+    const { productId } = req.params;
+    if (!productId) {
+      return res.status(400).json({
+        success: false,
+        status: 400,
+        message: "Product ID is required",
+      });
     }
 
+    // Fetch product by ID
+    const product = await companyModel.Product.findById(productId);
+
+   
+    if (!product) {
+      return res.status(200).json({
+        success: true,
+        status: 404,
+        message: "No Product found",
+        information: {
+          product: {},
+        },
+      });
+    }
+
+    // Return the product in the response
     return res.status(200).json({
       success: true,
-      message: "Product information retrieved successfully",
-      information: product,
+      status: 200,
+      message: "Product retrieved successfully",
+      information: {
+        product, 
+      },
     });
   } catch (error) {
-    console.error("Error fetching product information:", error);
-    return res.status(500).json({ success: false, message: error.message });
+    console.error("Error fetching Product", error);
+    return res.status(500).json({
+      success: false,
+      status: 500,
+      message: error.message,
+    });
   }
 };
 

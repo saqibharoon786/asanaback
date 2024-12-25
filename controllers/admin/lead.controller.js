@@ -83,7 +83,7 @@ const createLead = async (req, res) => {
       lead_Creater: {
         name: user.name,
         email: user.email,
-        phone: user.contact || user.phone,  // You may use `user.contact` or `user.phone` depending on your schema
+        phone: user.contact || user.phone, 
       },
       lead_Scope,
       lead_InstallationTime,

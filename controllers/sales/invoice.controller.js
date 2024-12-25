@@ -4,36 +4,24 @@ const companyModel = require("../../models/company/companyIndex.model");
 const createInvoice = async (req, res) => {
   try {
     const user = req.user;
-    const name = req.user.name;
-    let invoice_TotalPrice = 0;
+    var invoice_TotalPrice = 0;
+    var tax = 0.05;
 
-    const tax = 0.05;
-    
+    var product_Tax = 0;
+    var product_TaxAmount = 0;
+    var product_DiscountedAmount = 0;
 
-    let product_Tax = 0;
-    let product_TaxAmount = 0;
-    let product_DiscountedAmount = 0;
+    // Destructure data from request body
+    var { invoice_Client, invoice_Products, invoice_Details } = req.body;
 
-    const { invoice_Creater, invoice_Client, invoice_Products, invoice_Details } = req.body;
-
-    // Validation: Check if creator, client, and products are provided
-    if (!invoice_Creater || !invoice_Client || !invoice_Products || invoice_Products.length === 0) {
-      return res.status(400).json({
-        success: false,
-        status: 400,
-        message: "Creator details, client details, and at least one product are required.",
-      });
-    }
-
-    // Loop through each product in the invoice_Products array
-    for (let item of invoice_Products) {
+    // Loop through each product in invoice_Products array
+    for (var item of invoice_Products) {
       product_DiscountedAmount = 0;
       product_TaxAmount = 0;
-
-      const { product, quantity, product_Price, product_Discount } = item;
+      var { product, quantity, product_Price, product_Discount } = item;
 
       // Find product in the database
-      const dbProduct = await companyModel.Product.findOne({
+      var dbProduct = await companyModel.Product.findOne({
         product_Name: product,
       });
 
@@ -45,60 +33,52 @@ const createInvoice = async (req, res) => {
         });
       }
 
-      if (dbProduct.product_StockQuantity < quantity) {
-        return res.status(400).json({
-          success: false,
-          status: 400,
-          message: `Not enough quantity for product '${product}'. Available: ${dbProduct.product_StockQuantity}, Requested: ${quantity}.`,
-        });
-      }
-    dbProduct.product_StockQuantity -=quantity;
-    await dbProduct.save();
-
       product_Tax = product_Price * quantity * tax;
       item.product_Tax = product_Tax;
-
-      let totalProductPrice = (product_Price * quantity) + product_Tax;
-      product_DiscountedAmount = totalProductPrice * (product_Discount / 100);
-      const discountedProductPrice = totalProductPrice - product_DiscountedAmount;
-
+      product_Price = (product_Price * quantity) + product_Tax;
+      product_DiscountedAmount = product_Price * (product_Discount / 100);
+      product_Price = product_Price - product_DiscountedAmount;
       item.product_Discount = product_Discount;
-      item.product_FinalAmount = discountedProductPrice;
+      item.product_FinalAmount = product_Price;
 
       invoice_TotalPrice += item.product_FinalAmount;
-
     }
 
+    // Get the total count of invoices created by this user
+    var invoiceCount = await companyModel.Invoice.countDocuments();
+    var invoice_Identifier = `${user.userId}-${invoiceCount + 1}`;
+
     // Prepare invoice details
-    const newInvoiceDetails = {
+    var newInvoiceDetails = {
       dateCreated: new Date(),
-      status: invoice_Details?.status || "Pending",
+      status: invoice_Details?.status || "Unpaid", // Default to "Pending" if not provided
     };
 
-    // Save the invoice to the database
-    const newInvoice = await companyModel.Invoice.create({
-      invoice_Creater,
+    // Create a new invoice document
+    var newInvoice = await companyModel.Invoice.create({
+      invoice_Identifier,
+      invoice_Creater: {
+        name: user.name,
+        email: user.email,
+        contact: user.contact,
+      },
       invoice_Client,
       invoice_Products,
       invoice_TotalPrice,
       invoice_Details: newInvoiceDetails,
     });
+
+    // Correcting the loop to update product stock quantities
+    for (const item of newInvoice.invoice_Products) {
+      const product = await companyModel.Product.findOne({ product_Name: item.product, deleted: false});
     
-
-    let invoice_Identifier;
-
-    if (name) {
-      const namePart = name.substring(0, 2).toUpperCase();
-      const idPart = newInvoice._id.toString().slice(-4);
-      invoice_Identifier = `${namePart}-${idPart}`;
-    } else {
-      invoice_Identifier = newInvoice._id.toString();
+      if (product) {
+        product.product_StockQuantity -= item.quantity; // Decrease stock quantity
+        await product.save(); // Save the updated product
+      }
     }
-
-    // Attach the identifier to the document
-    newInvoice.invoice_Identifier = invoice_Identifier;
-    await newInvoice.save();
-
+    
+    // Send response with the created invoice
     return res.status(200).json({
       success: true,
       status: 200,
@@ -116,7 +96,6 @@ const createInvoice = async (req, res) => {
     });
   }
 };
-
 
 const getAllInvoices = async (req, res) => {
   try {

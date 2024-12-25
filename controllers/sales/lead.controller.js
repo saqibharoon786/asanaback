@@ -36,18 +36,7 @@ const createLead = async (req, res) => {
       lead_Client,
     } = req.body;
 
-    // Check if a similar lead already exists (based on client name and scope)
-    const existingLead = await companyModel.Lead.findOne({
-      lead_Name,
-    });
-
-    if (existingLead) {
-      return res.status(409).json({
-        success: false,
-        status: 409,
-        message: "Lead with similar details already exists",
-      });
-    }
+ 
 
     // Create new lead document
     const savedLead = await companyModel.Lead.create({

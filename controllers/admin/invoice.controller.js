@@ -56,7 +56,7 @@ const createInvoice = async (req, res) => {
 
     // Create a new invoice document
     var newInvoice = await companyModel.Invoice.create({
-      invoice_Identifier, // Add the invoice identifier here
+      invoice_Identifier,
       invoice_Creater: {
         name: user.name,
         email: user.email,
@@ -68,6 +68,16 @@ const createInvoice = async (req, res) => {
       invoice_Details: newInvoiceDetails,
     });
 
+    // Correcting the loop to update product stock quantities
+    for (const item of newInvoice.invoice_Products) {
+      const product = await companyModel.Product.findOne({ product_Name: item.product, deleted: false });
+    
+      if (product) {
+        product.product_StockQuantity -= item.quantity; // Decrease stock quantity
+        await product.save(); // Save the updated product
+      }
+    }
+    
     // Send response with the created invoice
     return res.status(200).json({
       success: true,

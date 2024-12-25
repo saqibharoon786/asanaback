@@ -38,35 +38,49 @@ const getAllProducts = async (req, res) => {
 
 const getProductInformation = async (req, res) => {
   try {
-    const { Id } = req.params;
-
-    // Find product and populate vendor details
-    const product = await companyModel.Product.findOne({
-      Id,
-      deleted: false,
-    }).populate(
-      "product_Vendor",
-      "vendor_Name vendor_Email vendor_Contact Vendor Address"
-    );
-
-    if (!product) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Product not found" });
+    // Destructure and validate the ID parameter
+    const { productId } = req.params;
+    if (!productId) {
+      return res.status(400).json({
+        success: false,
+        status: 400,
+        message: "Product ID is required",
+      });
     }
 
+    // Fetch product by ID
+    const product = await companyModel.Product.findById(productId);
+
+    if (!product) {
+      return res.status(200).json({
+        success: true,
+        status: 404,
+        message: "No Product found",
+        information: {
+          product: {},
+        },
+      });
+    }
+
+    // Return the product in the response
     return res.status(200).json({
       success: true,
-      message: "Product information retrieved successfully",
-      information: product,
+      status: 200,
+      message: "Product retrieved successfully",
+      information: {
+        product, 
+      },
     });
   } catch (error) {
-    console.error("Error fetching product information:", error);
-    return res.status(500).json({ success: false, message: error.message });
+    console.error("Error fetching Product", error);
+    return res.status(500).json({
+      success: false,
+      status: 500,
+      message: error.message,
+    });
   }
 };
-
-const project = {
+project = {
   
   getAllProducts,
   getProductInformation,
