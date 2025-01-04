@@ -8,12 +8,17 @@ const userSchema = new mongoose.Schema(
     password: { type: String },
     contact: { type: String },
     address: { type: String },
-    image: {  filePath: { type: String}},
-    department: {
-        type: String,
-        enum: ["Admin", "HR", "Sales", "IT", "Web Development"],
+    image: { filePath: { type: String } },
+    access: {
+      type: String,
+      enum: ["SuperAdmin", "Admin"],
     },
-    deleted: { type: Boolean, default: false }  // Status field for soft delete
+    department: {
+      type: String,
+      enum: [ "HR", "Sales", "IT", "Web Development"],
+    },
+    companyId: { type: String },
+    deleted: { type: Boolean, default: false },
   },
   {
     timestamps: true,

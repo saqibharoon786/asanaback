@@ -2,10 +2,10 @@ var express = require("express");
 var router = express.Router();
 const login = require("./login.route");
 const signup = require("./signup.route");
-const admin = require("./admin/adminIndex.route")
-const hr = require("./hr/hrIndex")
-const sales = require("./sales/salesIndex.route")
-
+const admin = require("./admin/adminIndex.route");
+const hr = require("./hr/hrIndex");
+const sales = require("./sales/salesIndex.route");
+const superadmin = require("./superAdmin/superAdminIndex.route");
 
 // const department = require("./department.route");
 // const project = require("./project.route");
@@ -22,6 +22,7 @@ router.use("/signup", signup);
 router.use("/admin", admin);
 router.use("/sales", sales);
 router.use("/hr", hr);
+router.use("/superadmin", superadmin);
 
 // router.use("/project", project);
 // router.use("/product", product);

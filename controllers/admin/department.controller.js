@@ -5,6 +5,8 @@ const utils = require("../../utils/utilsIndex");
 // Add a new department
 const addDepartment = async (req, res) => {
   try {
+    const { companyId } = req.params;
+
     const { department_Name } = req.body;
 
     if (!department_Name) {
@@ -29,13 +31,16 @@ const addDepartment = async (req, res) => {
 
     const newDepartment = await companyModel.Department.create({
       department_Name,
+      companyId: companyId
     });
 
     return res.status(201).json({
       success: true,
       status: 201,
       message: "Department created successfully",
-      information: { createdDepartment: { department_Name } },
+      information: {
+        newDepartment: newDepartment,
+      },
     });
   } catch (error) {
     console.error("Error creating department:", error);
@@ -50,6 +55,7 @@ const addDepartment = async (req, res) => {
 // Add a new employee to a department
 const addEmployeeToDepartment = async (req, res) => {
   try {
+    const { companyId } = req.params;
     const {
       department_Name,
       employee_Name,
@@ -60,7 +66,7 @@ const addEmployeeToDepartment = async (req, res) => {
       employee_Address,
     } = req.body;
 
-    // Check if all required text fields are present
+    // Validate required fields
     if (
       !department_Name ||
       !employee_Name ||
@@ -72,73 +78,71 @@ const addEmployeeToDepartment = async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        status: 400,
-        message: "All text fields are required",
+        message: "All fields are required",
       });
     }
 
-    // Check if the employee image is present in req.file
+    // Validate file upload
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        status: 400,
         message: "Employee image is required",
       });
     }
 
-    // Use req.file.path to build the correct image path
+    // Build the correct image path
     const employee_ImagePath = `/uploads/employee/${req.file.filename}`;
 
+    // Check if department exists
     const department = await companyModel.Department.findOne({
+      companyId,
       department_Name,
     });
 
     if (!department) {
       return res.status(404).json({
         success: false,
-        status: 404,
-        message: "No department with this name",
+        message: "No department with this name found in the company",
       });
     }
 
-    // Generate unique user ID and encrypt password
+    // Check for duplicate email
+    const existingEmployee = await companyModel.User.findOne({ email: employee_Email });
+    if (existingEmployee) {
+      return res.status(409).json({
+        success: false,
+        message: "Employee with this email already exists",
+      });
+    }
+
+    // Generate unique user ID and hash password
     const userId = await utils.generateUniqueUserId(employee_Name);
     const hashedPassword = await bcrypt.hash(employee_Password, 10);
 
-    const existingEmployeeEmail = await companyModel.User.findOne({ email: employee_Email });
-    if (existingEmployeeEmail) {
-      return res.status(409).json({
-        success: false,
-        status: 409,
-        message: "Employee already exists",
-      });
-    }
-
-    // Save new user with the image filepath
+    // Create new employee record
     const newUser = await companyModel.User.create({
+      companyId:companyId,
       name: employee_Name,
-      userId: userId,
+      userId,
       email: employee_Email,
       password: hashedPassword,
       contact: employee_Contact,
       address: employee_Address,
-      image: {
-        filePath: employee_ImagePath,
-      },
+      image: { filePath: employee_ImagePath },
       department: department_Name,
     });
 
-    // Add the employee to the department
+    // Add employee to department's employee list
     department.department_Employees.push({
-      userId: userId,
-      employee_Designation: employee_Designation,
+      userId,
+      employee_Designation,
       deleted: false,
     });
+
     await department.save();
 
     return res.status(201).json({
       success: true,
-      status: 201,
       message: "Employee added successfully",
       information: { newUser },
     });
@@ -146,17 +150,17 @@ const addEmployeeToDepartment = async (req, res) => {
     console.error("Error adding employee:", error);
     return res.status(500).json({
       success: false,
-      status: 500,
-      message: error.message,
+      message: "An error occurred while adding the employee",
     });
   }
 };
 
+
 // Get all employees
 const getAllEmployees = async (req, res) => {
   try {
-    // Fetch all users from the User model
-    const users = await companyModel.User.find();
+    const {companyId} = req.params;
+    const users = await companyModel.User.find({companyId:companyId});
 
     if (!users || users.length === 0) {
       return res.status(200).json({
@@ -188,8 +192,8 @@ const getAllEmployees = async (req, res) => {
 // Get all departments and their employees
 const getDepartments = async (req, res) => {
   try {
-    // Fetch all departments with their employees (populating the department_Employees field)
-    const departments = await companyModel.Department.find().populate(
+    const { companyId }=req.params;
+    const departments = await companyModel.Department.find({companyId:companyId}).populate(
       "department_Employees.userId"
     );
 
@@ -211,7 +215,7 @@ const getDepartments = async (req, res) => {
       information: {
         departments: departments.map((department) => ({
           department_Name: department.department_Name,
-          employees: department.department_Employees, // You can customize which employee fields you want to include
+          employees: department.department_Employees,
         })),
       },
     });
@@ -227,64 +231,62 @@ const getDepartments = async (req, res) => {
 
 const deleteEmployee = async (req, res) => {
   try {
+    const { companyId } = req.params;
     const { email } = req.body;
 
     if (!email) {
       return res.status(400).json({
         success: false,
-        message: "Please provide the email of the employee."
+        message: "Please provide the email of the employee.",
       });
     }
 
-    // Find the user by email
-    const user = await companyModel.User.findOne({ email });
+    // Find the user by email and companyId
+    const user = await companyModel.User.findOne({ email, companyId });
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found."
+        message: "User not found or does not belong to the specified company.",
       });
     }
 
-    const userId = user.userId;
+    const userId = user._id; // Use MongoDB's `_id` for consistency
 
-    // Mark the user as deleted by updating the 'status' field
+    // Mark the user as deleted
     await companyModel.User.updateOne(
-      { email }, // Find the user by email
-      { $set: { deleted: true } } // Update the 'deleted' field to true
+      { _id: userId },
+      { $set: { deleted: true } }
     );
 
+    // Mark the user as deleted in the department's employees list
     await companyModel.Department.updateOne(
-      { "department_Employees.userId": userId }, // Find the department with the employee
-      { $set: { "department_Employees.$.deleted": true } } // Update the 'deleted' field of the matched employee
+      { companyId, "department_Employees.userId": userId },
+      { $set: { "department_Employees.$.deleted": true } }
     );
-    
-    // await companyModel.Department.updateOne(
-    //   { "department_Employees.userId": userId }, // Find the department with the employee
-    //   { $set: { "department_Employees.$.deleted": true } } // Update the 'deleted' field of the matched employee
-    // );
-    
+
     return res.status(200).json({
       success: true,
-      message: "Employee marked as deleted successfully."
+      message: "Employee marked as deleted successfully.",
     });
   } catch (error) {
     console.error("Error deleting employee:", error);
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "An error occurred while deleting the employee.",
     });
   }
 };
 
+
 const getEmployeeInformation = async (req, res) => {
   try {
-    const { userId } = req.params;
+    const { userId, companyId } = req.params;
 
     // Find the user
-    const user = await companyModel.User.findOne({ userId: userId });
+    const user = await companyModel.User.findOne({ userId: userId, companyId });
 
     // Find the department where department_Employees contains the given userId
-    const department = await companyModel.Department.findOne({
+    const department = await companyModel.Department.findOne({companyId,
       department_Employees: { $elemMatch: { userId: userId, deleted: false }},
     });
 
@@ -313,7 +315,7 @@ const getEmployeeInformation = async (req, res) => {
 
 const updateEmployee = async (req, res) => {
   try {
-    const { userId } = req.params;
+    const { userId, companyId } = req.params;
     const {
       employee_NewName,
       employee_NewEmail,
@@ -321,13 +323,16 @@ const updateEmployee = async (req, res) => {
       employee_NewDesignation,
       employee_NewContact,
       employee_NewAddress,
-      employee_NewDepartment
+      employee_NewDepartment,
     } = req.body;
 
-    // Step 1: Find the user
-    const user = await companyModel.User.findOne({ userId });
+    // Step 1: Find the user by userId and companyId
+    const user = await companyModel.User.findOne({ userId, companyId });
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res.status(404).json({
+        success: false,
+        message: "User not found or does not belong to the specified company",
+      });
     }
 
     // Step 2: Hash new password if provided
@@ -336,12 +341,12 @@ const updateEmployee = async (req, res) => {
       hashedPassword = await bcrypt.hash(employee_NewPassword, 10);
     }
 
-    // Construct new image path
+    // Construct new image path if a new image is uploaded
     const newEmployee_ImagePath = req.file ? `/uploads/employee/${req.file.filename}` : user.image?.filePath;
 
     // Step 3: Update user information in the database
     const updatedUser = await companyModel.User.findOneAndUpdate(
-      { userId },
+      { userId, companyId },
       {
         name: employee_NewName || user.name,
         email: employee_NewEmail || user.email,
@@ -350,6 +355,7 @@ const updateEmployee = async (req, res) => {
         address: employee_NewAddress || user.address,
         image: { filePath: newEmployee_ImagePath },
         department: employee_NewDepartment || user.department,
+        
       },
       { new: true }
     );
@@ -360,24 +366,26 @@ const updateEmployee = async (req, res) => {
 
     // Step 4: Handle department updates
     const previousDepartment = await companyModel.Department.findOne({
-      department_Name: user.department
+      companyId,
+      department_Name: user.department,
     });
 
     const employee_NewDepartmentDoc = await companyModel.Department.findOne({
-      department_Name: employee_NewDepartment
+      companyId,
+      department_Name: employee_NewDepartment,
     });
 
     if (!employee_NewDepartmentDoc) {
       return res.status(404).json({
         success: false,
-        message: "New department does not exist"
+        message: "New department does not exist for the specified company",
       });
     }
 
     if (previousDepartment && previousDepartment.department_Name !== employee_NewDepartment) {
       // Step 5: Soft delete the user in the previous department
       const previousEmployeeIndex = previousDepartment.department_Employees.findIndex(
-        emp => emp.userId === userId
+        (emp) => emp.userId === userId
       );
 
       if (previousEmployeeIndex !== -1) {
@@ -389,7 +397,7 @@ const updateEmployee = async (req, res) => {
       employee_NewDepartmentDoc.department_Employees.push({
         userId: userId,
         employee_Designation: employee_NewDesignation,
-        deleted: false
+        deleted: false,
       });
 
       await employee_NewDepartmentDoc.save();
@@ -401,19 +409,19 @@ const updateEmployee = async (req, res) => {
       message: "User and department information updated successfully",
       information: {
         updatedUser,
-        employee_NewDepartmentDoc
-      }
+        employee_NewDepartmentDoc,
+      },
     });
-    
   } catch (error) {
     console.error("Error updating employee:", error);
     return res.status(500).json({
       success: false,
       status: 500,
-      message: error.message
+      message: error.message,
     });
   }
 };
+
 
 const department = {
   addDepartment,

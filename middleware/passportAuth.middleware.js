@@ -1,4 +1,4 @@
-require('dotenv').config();
+require("dotenv").config();
 const passport = require("passport");
 const companyModel = require("../models/company/companyIndex.model");
 const { ExtractJwt } = require("passport-jwt");
@@ -16,6 +16,7 @@ passport.use(
     try {
       const user = await companyModel.User.findOne({
         email: jwt_payload.email,
+
       });
 
       if (user) {

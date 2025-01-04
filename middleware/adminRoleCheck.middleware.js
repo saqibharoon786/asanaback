@@ -1,14 +1,15 @@
-const express = require("express");
-
 const adminRoleCheck = async (req, res, next) => {
   try {
     const user = req.user;
-    if (user.department !== "Admin") {
+
+    if (user.access !== "Admin") {
       return res.status(401).json({ message: "Unauthorized Access" });
     }
+
     next();
   } catch (error) {
-    res.status(500).json({ message: "Unauthorized Access" });
+    console.error("Authorization error:", error);
+    return res.status(500).json({ message: "Unauthorized Access" });
   }
 };
 

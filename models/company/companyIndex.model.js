@@ -5,6 +5,9 @@ const Product = require("./product.model");
 const Quote = require("./quote.model");
 const Lead = require("./lead.model");
 const Invoice = require("./invoice.model");
+const Package = require("./package.model")
+const Company=require("./company.model")
+
 const companyModel = {
   User,
   Department,
@@ -13,6 +16,8 @@ const companyModel = {
   Quote,
   Lead,
   Invoice,
+  Package,
+  Company,
   
 };
 

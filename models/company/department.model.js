@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const departmentSchema = new mongoose.Schema(
   {
+    companyId: { type: String}, 
     department_Name: { type: String, required: true },
     department_Employees: [
       {
