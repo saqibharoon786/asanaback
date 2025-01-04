@@ -3,54 +3,39 @@ const companyModel = require("../../models/company/companyIndex.model"); // Impo
 const utils = require("../../utils/utilsIndex");
 
 // Add a new department
-const addDepartment = async (req, res) => {
-  try {
-    const companyId = req.user.companyId;
-
-    const { department_Name } = req.body;
-
-    if (!department_Name) {
-      return res.status(400).json({
+const addEvent = async (req, res) => {
+    try {
+      const companyId = req.user.companyId;
+  
+      const newEvent = await companyModel.Event.create({
+        event_Name: req.body.event_Name,
+        event_Description: req.body.event_Description,
+        event_organizer: req.body.event_organizer,
+        event_location: req.body.event_location,
+        event_Date: req.body.event_Date,
+        event_Image: {
+          filePath: req.body.event_Image.filePath,
+        },
+      });
+  
+      return res.status(201).json({
+        success: true,
+        status: 201,
+        message: "Event created successfully",
+        information: {
+          newEvent: newEvent,
+        },
+      });
+    } catch (error) {
+      console.error("Error creating event:", error);
+      return res.status(500).json({
         success: false,
-        status: 400,
-        message: "Department name is required",
+        status: 500,
+        message: error.message,
       });
     }
-
-    const department = await companyModel.Department.findOne({
-      department_Name,
-    });
-
-    if (department) {
-      return res.status(409).json({
-        success: false,
-        status: 409,
-        message: "Department already exists",
-      });
-    }
-
-    const newDepartment = await companyModel.Department.create({
-      department_Name,
-      companyId: companyId
-    });
-
-    return res.status(201).json({
-      success: true,
-      status: 201,
-      message: "Department created successfully",
-      information: {
-        newDepartment: newDepartment,
-      },
-    });
-  } catch (error) {
-    console.error("Error creating department:", error);
-    return res.status(500).json({
-      success: false,
-      status: 500,
-      message: error.message,
-    });
-  }
-};
+  };
+  
 
 // Add a new employee to a department
 const addEmployeeToDepartment = async (req, res) => {
@@ -425,7 +410,7 @@ const updateEmployee = async (req, res) => {
 
 
 const department = {
-  addDepartment,
+  addEvent,
   addEmployeeToDepartment,
   getAllEmployees,
   getDepartments,

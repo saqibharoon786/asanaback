@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 // Product schema
 const invoiceSchema = new mongoose.Schema(
   {
+   companyId: { type: String },
    invoice_Identifier: {
       type: String,
     },
@@ -52,6 +53,8 @@ const invoiceSchema = new mongoose.Schema(
       },
     },
     deleted: { type: Boolean, default: false }
+   
+
   },
   
   { timestamps: true }

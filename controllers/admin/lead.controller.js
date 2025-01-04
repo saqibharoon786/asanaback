@@ -3,7 +3,8 @@ const companyModel = require("../../models/company/companyIndex.model"); // Adju
 
 const getAllLeads = async (req, res) => {
   try {
-    const allLeads = await companyModel.Lead.find({ deleted: false });
+    const companyId = req.user.companyId;
+    const allLeads = await companyModel.Lead.find({companyId, deleted: false });
     return res.status(201).json({
       success: true,
       status: 201,
@@ -24,13 +25,25 @@ const getAllLeads = async (req, res) => {
 
 const approveLeadById = async (req, res) => {
   try {
-    const user = req.user;
+    const companyId = req.user.companyId;
     const { leadId } = req.params;
 
-    // Fetch the lead by ID using findById
-    const lead = await companyModel.Lead.findById(leadId);
+    // Fetch the lead by ID and companyId
+    const lead = await companyModel.Lead.findOne({
+      _id: leadId,
+      companyId,
+    });
 
-    // Ensure the lead is not already accepted
+    // Check if the lead exists
+    if (!lead) {
+      return res.status(404).json({
+        success: false,
+        status: 404,
+        message: "Lead not found.",
+      });
+    }
+
+    // Ensure the lead is not already approved
     if (lead.lead_Details.status === "Approved") {
       return res.status(400).json({
         success: false,
@@ -39,33 +52,36 @@ const approveLeadById = async (req, res) => {
       });
     }
 
+    // Update the lead status to "Approved"
     lead.lead_Details.status = "Approved";
     const updatedLead = await lead.save();
 
-    // Return the success response with both quote and invoice details
+    // Return the success response with the updated lead details
     return res.status(200).json({
       success: true,
       status: 200,
-      message: "Lead Approved and Invoice Created successfully",
+      message: "Lead approved successfully.",
       information: {
         lead: updatedLead,
       },
     });
   } catch (error) {
-    console.error("Error in accepting quote:", error);
+    console.error("Error approving lead:", error);
 
     // Improved error message
     return res.status(500).json({
       success: false,
       status: 500,
-      message: error.message || "An error occurred while processing the quote.",
+      message: error.message || "An error occurred while processing the request.",
     });
   }
 };
 
+
 const createLead = async (req, res) => {
   try {
-    const user = req.user; // Extract the user (creator) from the request
+    const companyId = req.user.companyId;
+    const user = req.user; 
     const {
       lead_Name,
       lead_Scope,
@@ -79,6 +95,7 @@ const createLead = async (req, res) => {
 
     // Create a new lead document
     const savedLead = await companyModel.Lead.create({
+      companyId,
       lead_Name,
       lead_Creater: {
         name: user.name,
@@ -114,8 +131,14 @@ const createLead = async (req, res) => {
 
 const getLeadById = async (req, res) => {
   try {
+    const companyId = req.user.companyId;
     const { leadId } = req.params;
-    const lead = await companyModel.Lead.findById(leadId);
+
+    // Fetch the lead using leadId and companyId
+    const lead = await companyModel.Lead.findOne({
+      _id: leadId,
+      companyId,
+    });
 
     if (!lead) {
       return res.status(404).json({
@@ -143,10 +166,11 @@ const getLeadById = async (req, res) => {
 };
 
 
+
 const deleteLead = async (req, res) => {
   try {
+    const companyId = req.user.companyId;
     const { leadId } = req.params;
-
     if (!leadId) {
       return res.status(400).json({
         success: false,
@@ -155,7 +179,10 @@ const deleteLead = async (req, res) => {
     }
 
     // Find the lead by ID and mark it as deleted
-    const lead = await companyModel.Lead.findById(leadId);
+    const lead = await companyModel.Lead.findById({
+      companyId, 
+      _id: leadId,
+    });
     if (!lead) {
       return res.status(404).json({
         success: false,

@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
+    companyId: { type: String },
     name: { type: String },
     userId: { type: String },
     email: { type: String, required: true, unique: true },
@@ -17,7 +18,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: [ "HR", "Sales", "IT", "Web Development"],
     },
-    companyId: { type: String },
     deleted: { type: Boolean, default: false },
   },
   {

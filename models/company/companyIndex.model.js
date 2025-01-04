@@ -6,7 +6,9 @@ const Quote = require("./quote.model");
 const Lead = require("./lead.model");
 const Invoice = require("./invoice.model");
 const Package = require("./package.model")
-const Company=require("./company.model")
+const Company = require("./company.model")
+const Event = require("./event.model")
+
 
 const companyModel = {
   User,
@@ -18,7 +20,7 @@ const companyModel = {
   Invoice,
   Package,
   Company,
-  
+  Event
 };
 
 module.exports = companyModel;

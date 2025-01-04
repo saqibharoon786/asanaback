@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 // Product schema
 const productSchema = new mongoose.Schema(
   {
+    companyId: { type: String },
     product_Name: {
       type: String,
     },

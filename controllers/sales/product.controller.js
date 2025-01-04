@@ -5,16 +5,17 @@ const companyModel = require("../../models/company/companyIndex.model");
 
 const getAllProducts = async (req, res) => {
   try {
-    const Products = await companyModel.Product.find({ deleted: false }); 
+    const companyId = req.user.companyId;
+    const Products = await companyModel.Product.find({ companyId, deleted: false });
 
     if (!Products || Products.length === 0) {
       return res.status(200).json({
         success: true,
-        status: 200,             
+        status: 200,
         message: "No products found",
         information: {
-          products: []           
-        }
+          products: [],
+        },
       });
     }
 
@@ -24,7 +25,7 @@ const getAllProducts = async (req, res) => {
       status: 200,
       message: "All products fetched successfully",
       information: {
-        products: Products       
+        products: Products,
       },
     });
   } catch (error) {
@@ -38,8 +39,9 @@ const getAllProducts = async (req, res) => {
 
 const getProductInformation = async (req, res) => {
   try {
-    // Destructure and validate the ID parameter
+    const companyId = req.user.companyId;
     const { productId } = req.params;
+
     if (!productId) {
       return res.status(400).json({
         success: false,
@@ -48,12 +50,15 @@ const getProductInformation = async (req, res) => {
       });
     }
 
-    // Fetch product by ID
-    const product = await companyModel.Product.findById(productId);
+    // Fetch product by productId and companyId
+    const product = await companyModel.Product.findOne({
+      _id: productId,
+      companyId,
+    });
 
     if (!product) {
-      return res.status(200).json({
-        success: true,
+      return res.status(404).json({
+        success: false,
         status: 404,
         message: "No Product found",
         information: {
@@ -62,17 +67,17 @@ const getProductInformation = async (req, res) => {
       });
     }
 
-    // Return the product in the response
+    // Return the full product information
     return res.status(200).json({
       success: true,
       status: 200,
       message: "Product retrieved successfully",
       information: {
-        product, 
+        product,
       },
     });
   } catch (error) {
-    console.error("Error fetching Product", error);
+    console.error("Error fetching Product:", error);
     return res.status(500).json({
       success: false,
       status: 500,
@@ -80,10 +85,10 @@ const getProductInformation = async (req, res) => {
     });
   }
 };
-project = {
+product = {
   
   getAllProducts,
   getProductInformation,
 };
 
-module.exports = project;
+module.exports = product;

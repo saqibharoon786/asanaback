@@ -7,21 +7,21 @@ const middleware = require("../../middleware/index.middleware");
 
 // Admin Department routes
 router.post(
-  "/:companyId/add-department",
+  "/add-department",
   passport.authenticate("jwt", { session: false }),
   middleware.adminRoleCheck,
   controller.adminController.department.addDepartment
 );
 
 router.get(
-  "/:companyId/get-departments",
+  "/get-departments",
   passport.authenticate("jwt", { session: false }),
   middleware.adminRoleCheck,
   controller.adminController.department.getDepartments
 );
 
 router.patch(
-  "/:companyId/add-employee",
+  "/add-employee",
   passport.authenticate("jwt", { session: false }),
   middleware.adminRoleCheck,
   upload.single('employee_Image'),
@@ -29,21 +29,21 @@ router.patch(
 );
 
 router.delete(
-  "/:companyId/delete-employee",
+  "/delete-employee",
   passport.authenticate("jwt", { session: false }),
   middleware.adminRoleCheck,
   controller.adminController.department.deleteEmployee
 );
 
 router.get(
-  "/:companyId/get-employees",
+  "/get-employees",
   passport.authenticate("jwt", { session: false }),
   middleware.adminRoleCheck,
   controller.adminController.department.getAllEmployees
 );
 
 router.patch(
-  "/:companyId/update-employee/:userId",
+  "/update-employee/:userId",
   passport.authenticate("jwt", { session: false }),
   middleware.adminRoleCheck,
   upload.single('employee_Image'),
@@ -51,7 +51,7 @@ router.patch(
 );
 
 router.get(
-  "/:companyId/get-employee/:userId",
+  "/get-employee/:userId",
   passport.authenticate("jwt", { session: false }),
   middleware.adminRoleCheck,
   controller.adminController.department.getEmployeeInformation

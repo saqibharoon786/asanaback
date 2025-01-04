@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 // Lead schema
 const leadSchema = new mongoose.Schema(
   {
+    companyId: { type: String },
     lead_Creater: {
       name: { type: String },
       email: { type: String },

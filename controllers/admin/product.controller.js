@@ -3,6 +3,7 @@ const companyModel = require("../../models/company/companyIndex.model");
 
 const addProduct = async (req, res) => {
   try {
+    const companyId = req.user.companyId;
     const {
       product_Name,
       product_CostPrice,
@@ -20,10 +21,11 @@ const addProduct = async (req, res) => {
 
     // Check if the product already exists in the Product collection
     const existingProduct = await companyModel.Product.findOne({
+      companyId,
       product_Name: product_Name,
       deleted: false,
     });
-    
+
     if (existingProduct) {
       return res.status(409).json({
         success: false,
@@ -32,8 +34,9 @@ const addProduct = async (req, res) => {
       });
     }
 
-    // Create a new product
+    // Create a new product with companyId
     const newProduct = await companyModel.Product.create({
+      companyId,
       product_Name,
       product_CostPrice,
       product_SellingPrice,
@@ -73,10 +76,11 @@ const addProduct = async (req, res) => {
   }
 };
 
+
 const getAllProducts = async (req, res) => {
   try {
-    // Fetch products where deleted is false
-    const Products = await companyModel.Product.find({ deleted: false });
+    const companyId = req.user.companyId;
+    const Products = await companyModel.Product.find({ companyId, deleted: false });
 
     if (!Products || Products.length === 0) {
       return res.status(200).json({
@@ -108,22 +112,22 @@ const getAllProducts = async (req, res) => {
 
 const deleteProduct = async (req, res) => {
   try {
+    const companyId = req.user.companyId;
     const { productId } = req.params;
 
-    // Find the product by productId
-    const product = await companyModel.Product.findById( productId );
+    // Find the product by productId and companyId
+    const product = await companyModel.Product.findOne({ _id: productId, companyId });
 
     if (!product) {
-      // If product is not found, return 404
       return res.status(404).json({
         success: false,
         message: "Product not found.",
       });
     }
-    
-    // Mark the product as deleted by updating the `deleted` field
+
+    // Mark the product as deleted
     await companyModel.Product.updateOne(
-      { _id : productId }, 
+      { _id: productId },
       { $set: { deleted: true } }
     );
 
@@ -142,8 +146,10 @@ const deleteProduct = async (req, res) => {
 
 
 
+
 const updateProduct = async (req, res) => {
   try {
+    const companyId = req.user.companyId;
     const { productId } = req.params;
     const {
       product_NewName,
@@ -158,8 +164,10 @@ const updateProduct = async (req, res) => {
       product_NewVendor,
     } = req.body;
 
-
-    const product = await companyModel.Product.findByIdAndUpdate(productId);
+    const product = await companyModel.Product.findOne({
+      _id: productId,
+      companyId,
+    });
     if (!product) {
       return res.status(404).json({
         success: false,
@@ -208,7 +216,6 @@ const updateProduct = async (req, res) => {
         product.product_Vendor.vendor_Contact;
     }
 
-    // Step 4: Save the updated product to the database
     await product.save();
 
     return res.status(200).json({
@@ -228,10 +235,13 @@ const updateProduct = async (req, res) => {
 };
 
 
+
+
 const getProductInformation = async (req, res) => {
   try {
-    // Destructure and validate the ID parameter
+    const companyId = req.user.companyId;
     const { productId } = req.params;
+
     if (!productId) {
       return res.status(400).json({
         success: false,
@@ -240,13 +250,15 @@ const getProductInformation = async (req, res) => {
       });
     }
 
-    // Fetch product by ID
-    const product = await companyModel.Product.findById(productId);
+    // Fetch product by productId and companyId
+    const product = await companyModel.Product.findOne({
+      _id: productId,
+      companyId,
+    });
 
-   
     if (!product) {
-      return res.status(200).json({
-        success: true,
+      return res.status(404).json({
+        success: false,
         status: 404,
         message: "No Product found",
         information: {
@@ -255,17 +267,17 @@ const getProductInformation = async (req, res) => {
       });
     }
 
-    // Return the product in the response
+    // Return the full product information
     return res.status(200).json({
       success: true,
       status: 200,
       message: "Product retrieved successfully",
       information: {
-        product, 
+        product,
       },
     });
   } catch (error) {
-    console.error("Error fetching Product", error);
+    console.error("Error fetching Product:", error);
     return res.status(500).json({
       success: false,
       status: 500,
@@ -274,7 +286,7 @@ const getProductInformation = async (req, res) => {
   }
 };
 
-const project = {
+const product = {
   addProduct,
   getAllProducts,
   deleteProduct,
@@ -282,4 +294,4 @@ const project = {
   getProductInformation,
 };
 
-module.exports = project;
+module.exports = product;

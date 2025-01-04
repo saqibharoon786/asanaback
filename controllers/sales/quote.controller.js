@@ -3,6 +3,7 @@ const companyModel = require("../../models/company/companyIndex.model");
 
 const createQuote = async (req, res) => {
   try {
+    const companyId = req.user.companyId;
     const user = req.user;
     var quote_TotalPrice = 0;
     var tax = 0.05;
@@ -22,6 +23,7 @@ const createQuote = async (req, res) => {
 
       // Find product in the database
       var dbProduct = await companyModel.Product.findOne({
+        companyId,
         product_Name: product,
       });
 
@@ -56,7 +58,8 @@ const createQuote = async (req, res) => {
 
     // Create a new quote document
     var newQuote = await companyModel.Quote.create({
-      quote_Identifier, // Add the quote identifier here
+      companyId, 
+      quote_Identifier,
       quote_Creater: {
         name: user.name,
         email: user.email,
@@ -89,8 +92,8 @@ const createQuote = async (req, res) => {
 
 const getAllQuotes = async (req, res) => {
   try {
-    // Fetch all Quotes
-    var quotes = await companyModel.Quote.find({ deleted: false });
+    const companyId = req.user.companyId;
+    var quotes = await companyModel.Quote.find({companyId ,deleted: false });
 
     if (!quotes || quotes.length === 0) {
       return res.status(200).json({
@@ -123,10 +126,12 @@ const getAllQuotes = async (req, res) => {
 
 const getQuoteById = async (req, res) => {
   try {
+    const companyId = req.user.companyId;
     var { quoteId } = req.params;
 
     // Fetch the quote by ID using findById
-    var quote = await companyModel.Quote.findById(quoteId);
+    var quote = await companyModel.Quote.findById({companyId,
+      _id : quoteId});
 
     // If no quote is found, return a message with an empty array
     if (!quote) {
@@ -162,11 +167,13 @@ const getQuoteById = async (req, res) => {
 
 const approveQuoteById = async (req, res) => {
   try {
+    const companyId = req.user.companyId;
     const user = req.user;
     const { quoteId } = req.params;
 
     // Fetch the quote by ID using findById
-    const quote = await companyModel.Quote.findById(quoteId);
+    const quote = await companyModel.Quote.findById({companyId,
+      _id: quoteId});
 
     // If no quote is found, return a message with an empty array
     if (!quote) {
@@ -215,8 +222,8 @@ const approveQuoteById = async (req, res) => {
       const product = await companyModel.Product.findOne({ product_Name: item.product, deleted: false });
     
       if (product) {
-        product.product_StockQuantity -= item.quantity; 
-        await product.save(); 
+        product.product_StockQuantity -= item.quantity; // Decrease stock quantity
+        await product.save(); // Save the updated product
       }
     }
 
@@ -244,6 +251,7 @@ const approveQuoteById = async (req, res) => {
 
 const deleteQuote = async (req, res) => {
   try {
+    const companyId = req.user.companyId;
     const { quoteId } =  req.params;
 
     if (!quoteId) {
@@ -254,7 +262,8 @@ const deleteQuote = async (req, res) => {
     }
 
     // Find the quote by ID and mark it as deleted
-    const quote = await companyModel.Quote.findById(quoteId);
+    const quote = await companyModel.Quote.findById({companyId,
+      _id: quoteId});
     if (!quote) {
       return res.status(404).json({
         success: false,
@@ -281,87 +290,7 @@ const deleteQuote = async (req, res) => {
   }
 };
 
-//User Controllers
-const getQuoteByEmail = async (req, res) => {
-  try {
-    const user = req.user;
-    const email = user.email;
 
-    // Fetch the quote by ID using findById
-    var quotes = await companyModel.Quote.find({"quote_Creater.email" : email});
-
-    // If no quote is found, return a message with an empty array
-    if (!quotes) {
-      return res.status(200).json({
-        success: true,
-        status: 404,
-        message: "No Quote found",
-        information: {
-          quote: [],
-        },
-      });
-    }
-
-    // If quote is found, return it in the response
-    return res.status(200).json({
-      success: true,
-      status: 200,
-      message: "Quote retrieved successfully",
-      information: {
-        quotes, // Wrap in an array to maintain consistency
-      },
-    });
-  } catch (error) {
-    console.error("Error fetching Quote:", error);
-    return res.status(500).json({
-      success: false,
-      status: 500,
-      message: error.message,
-    });
-  }
-};
-
-
-
-
-const getCustomers = async (req, res) => {
-  try {
-    const user = req.user;
-    const email = user.email;
-
-    // Fetch the quote by ID using findById
-    var quotes = await companyModel.Quote.find({"quote_Creater.email" : email});
-
-    // If no quote is found, return a message with an empty array
-    if (!quotes) {
-      return res.status(200).json({
-        success: true,
-        status: 404,
-        message: "No Quote found",
-        information: {
-          quote: [],
-        },
-      });
-    }
-
-    // If quote is found, return it in the response
-    return res.status(200).json({
-      success: true,
-      status: 200,
-      message: "Quote retrieved successfully",
-      information: {
-        quotes, // Wrap in an array to maintain consistency
-      },
-    });
-  } catch (error) {
-    console.error("Error fetching Quote:", error);
-    return res.status(500).json({
-      success: false,
-      status: 500,
-      message: error.message,
-    });
-  }
-};
 
 
 const quote = {

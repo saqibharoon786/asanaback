@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 // Product schema
 const quoteSchema = new mongoose.Schema(
   {
+    companyId: { type: String },
     quote_Identifier: {
       type: String,
     },

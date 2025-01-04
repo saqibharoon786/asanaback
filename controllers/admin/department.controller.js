@@ -5,7 +5,7 @@ const utils = require("../../utils/utilsIndex");
 // Add a new department
 const addDepartment = async (req, res) => {
   try {
-    const { companyId } = req.params;
+    const companyId = req.user.companyId;
 
     const { department_Name } = req.body;
 
@@ -55,7 +55,7 @@ const addDepartment = async (req, res) => {
 // Add a new employee to a department
 const addEmployeeToDepartment = async (req, res) => {
   try {
-    const { companyId } = req.params;
+    const companyId = req.user.companyId;
     const {
       department_Name,
       employee_Name,
@@ -159,7 +159,7 @@ const addEmployeeToDepartment = async (req, res) => {
 // Get all employees
 const getAllEmployees = async (req, res) => {
   try {
-    const {companyId} = req.params;
+    const companyId = req.user.companyId;
     const users = await companyModel.User.find({companyId:companyId});
 
     if (!users || users.length === 0) {
@@ -192,7 +192,7 @@ const getAllEmployees = async (req, res) => {
 // Get all departments and their employees
 const getDepartments = async (req, res) => {
   try {
-    const { companyId }=req.params;
+    const companyId = req.user.companyId;
     const departments = await companyModel.Department.find({companyId:companyId}).populate(
       "department_Employees.userId"
     );
@@ -231,7 +231,7 @@ const getDepartments = async (req, res) => {
 
 const deleteEmployee = async (req, res) => {
   try {
-    const { companyId } = req.params;
+    const companyId = req.user.companyId;
     const { email } = req.body;
 
     if (!email) {
@@ -280,7 +280,8 @@ const deleteEmployee = async (req, res) => {
 
 const getEmployeeInformation = async (req, res) => {
   try {
-    const { userId, companyId } = req.params;
+    const companyId = req.user.companyId;
+    const { userId } = req.params;
 
     // Find the user
     const user = await companyModel.User.findOne({ userId: userId, companyId });
@@ -315,7 +316,8 @@ const getEmployeeInformation = async (req, res) => {
 
 const updateEmployee = async (req, res) => {
   try {
-    const { userId, companyId } = req.params;
+    const companyId = req.user.companyId;
+    const { userId } = req.params;
     const {
       employee_NewName,
       employee_NewEmail,

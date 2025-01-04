@@ -2,6 +2,7 @@ const companyModel = require("../../models/company/companyIndex.model");
 
 // Create an Invoice
 const createInvoice = async (req, res) => {
+  const companyId = req.user.companyId;
   try {
     const user = req.user;
     var invoice_TotalPrice = 0;
@@ -23,6 +24,7 @@ const createInvoice = async (req, res) => {
       // Find product in the database
       var dbProduct = await companyModel.Product.findOne({
         product_Name: product,
+        companyId,
       });
 
       if (!dbProduct) {
@@ -56,6 +58,7 @@ const createInvoice = async (req, res) => {
 
     // Create a new invoice document
     var newInvoice = await companyModel.Invoice.create({
+      companyId, 
       invoice_Identifier,
       invoice_Creater: {
         name: user.name,
@@ -67,10 +70,11 @@ const createInvoice = async (req, res) => {
       invoice_TotalPrice,
       invoice_Details: newInvoiceDetails,
     });
+    
 
     // Correcting the loop to update product stock quantities
     for (const item of newInvoice.invoice_Products) {
-      const product = await companyModel.Product.findOne({ product_Name: item.product, deleted: false });
+      const product = await companyModel.Product.findOne({companyId, product_Name: item.product, deleted: false });
     
       if (product) {
         product.product_StockQuantity -= item.quantity; // Decrease stock quantity
@@ -99,8 +103,8 @@ const createInvoice = async (req, res) => {
 
 const getAllInvoices = async (req, res) => {
   try {
-    // Fetch all Invoice
-    var Invoices = await companyModel.Invoice.find({ deleted: false });
+    const companyId = req.user.companyId;
+    var Invoices = await companyModel.Invoice.find({ companyId, deleted: false });
 
     if (!Invoices || Invoices.length === 0) {
       return res.status(200).json({
@@ -133,14 +137,16 @@ const getAllInvoices = async (req, res) => {
 
 const getInvoiceById = async (req, res) => {
   try {
-    var { invoiceId } = req.params;
+    const companyId = req.user.companyId;
+    const { invoiceId } = req.params;
 
-    // Fetch the invoice by ID using findById
-    var invoice = await companyModel.Invoice.findById(invoiceId);
+    const invoice = await companyModel.Invoice.findOne({
+      _id: invoiceId,
+      companyId,
+    });
 
-    // If no invoice is found, return a message with an empty array
     if (!invoice) {
-      return res.status(200).json({
+      return res.status(404).json({
         success: true,
         status: 404,
         message: "No Invoice found",
@@ -156,7 +162,7 @@ const getInvoiceById = async (req, res) => {
       status: 200,
       message: "Invoice retrieved successfully",
       information: {
-        invoice, 
+        invoice,
       },
     });
   } catch (error) {
@@ -169,15 +175,17 @@ const getInvoiceById = async (req, res) => {
   }
 };
 
+
 const setPaidInvoicebyId = async (req, res) => {
   try {
-    const user = req.user;
+    const companyId = req.user.companyId;
     const { invoiceId } = req.params;
 
-    // Fetch the invoice by ID using findById
-    var invoice = await companyModel.Invoice.findById(invoiceId);
+    const invoice = await companyModel.Invoice.findOne({
+      _id: invoiceId,
+      companyId,
+    });
 
-    // If no invoice is found, return a message with an empty array
     if (!invoice) {
       return res.status(404).json({
         success: false,
@@ -189,6 +197,7 @@ const setPaidInvoicebyId = async (req, res) => {
       });
     }
 
+    // Update the invoice status to "Paid"
     invoice.invoice_Details.status = "Paid";
     await invoice.save();
 
@@ -198,7 +207,7 @@ const setPaidInvoicebyId = async (req, res) => {
       status: 200,
       message: "Invoice paid successfully",
       information: {
-        invoice, 
+        invoice,
       },
     });
   } catch (error) {
@@ -210,8 +219,10 @@ const setPaidInvoicebyId = async (req, res) => {
     });
   }
 };
+
 const deleteInvoice = async (req, res) => {
   try {
+    const companyId = req.user.companyId;
     const { invoiceId } =  req.params;
 
     if (!invoiceId) {
@@ -222,7 +233,10 @@ const deleteInvoice = async (req, res) => {
     }
 
     // Find the invoice by ID and mark it as deleted
-    const invoice = await companyModel.Invoice.findById(invoiceId);
+    const invoice = await companyModel.Invoice.findById({
+      companyId,      
+    _id: invoiceId,
+    });
     if (!invoice) {
       return res.status(404).json({
         success: false,
