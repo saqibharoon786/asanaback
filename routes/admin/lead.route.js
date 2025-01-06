@@ -5,6 +5,16 @@ const upload = require("../../config/multer");
 const passport = require("../../middleware/passportAuth.middleware");
 const middleware = require("../../middleware/index.middleware");
 
+//
+router.get(
+  "/view-lead",
+  passport.authenticate("jwt", { session: false }),
+  middleware.checkPermission("read"), 
+  (req, res) => {
+    res.send("Leads Data");
+  }
+);
+
 router.post(
   "/create-lead",
   passport.authenticate("jwt", { session: false }),

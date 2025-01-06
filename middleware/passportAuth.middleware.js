@@ -16,7 +16,6 @@ passport.use(
     try {
       const user = await companyModel.User.findOne({
         email: jwt_payload.email,
-
       });
 
       if (user) {

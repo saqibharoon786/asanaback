@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 
 const projectSchema = new mongoose.Schema(
   {
-    
     project_Name: {
       type: String,
     },
@@ -15,6 +14,12 @@ const projectSchema = new mongoose.Schema(
         employee_Role: { type: String },
       },
     ],
+    project_Creator: {
+      type: String,
+    },
+    project_Progress: {
+      type: Number,
+    },
   },
   {
     timestamps: true,

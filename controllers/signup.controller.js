@@ -33,7 +33,15 @@ const signUp = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     const userId = await utils.generateUniqueUserId(name);
 
-    // Create a new user with the hashed password and append the role
+    // Define default permissions for the user
+    const defaultPermissions = {
+      invoice: ["create", "read", "update", "delete"],
+      lead: ["create", "read", "update", "delete"],
+      quote: ["create", "read", "update", "delete"],
+      product: ["create", "read", "update", "delete"]
+    };
+
+    // Create a new user with the hashed password and append the role and permissions
     const newUser = await companyModel.User.create({
       name,
       userId,
@@ -41,6 +49,7 @@ const signUp = async (req, res) => {
       password: hashedPassword,
       contact,
       access: "SuperAdmin",
+      permissions: defaultPermissions, // Set the default permissions
     });
 
     // Return a success message with the necessary user details

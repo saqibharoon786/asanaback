@@ -16,7 +16,14 @@ const userSchema = new mongoose.Schema(
     },
     department: {
       type: String,
-      enum: [ "HR", "Sales", "IT", "Web Development"],
+      enum: ["HR", "Sales", "IT", "Web Development"],
+    },
+    permissions: {
+      invoice: { type: [String], default: [] },
+      lead: { type: [String], default: [] },
+      quote: { type: [String], default: [] },
+      product: { type: [String], default: [] },
+      department: { type: [String], default: [] },
     },
     deleted: { type: Boolean, default: false },
   },
