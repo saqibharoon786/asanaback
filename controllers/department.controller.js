@@ -1,6 +1,6 @@
 const bcrypt = require("bcrypt");
-const companyModel = require("../../models/company/companyIndex.model"); // Import correctly
-const utils = require("../../utils/utilsIndex");
+const companyModel = require("../models/company/companyIndex.model"); // Import correctly
+const utils = require("../utils/utilsIndex");
 
 // Add a new department
 const addDepartment = async (req, res) => {
@@ -154,6 +154,7 @@ const addEmployeeToDepartment = async (req, res) => {
     });
   }
 };
+
 
 // Get all employees
 const getAllEmployees = async (req, res) => {

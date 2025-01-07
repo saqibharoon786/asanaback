@@ -1,4 +1,4 @@
-const companyModel = require("../../models/company/companyIndex.model");
+const companyModel = require("../models/company/companyIndex.model");
 
 // Create an Invoice
 const createInvoice = async (req, res) => {

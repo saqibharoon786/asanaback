@@ -1,5 +1,5 @@
 const express = require("express");
-const companyModel = require("../../models/company/companyIndex.model");
+const companyModel = require("../models/company/companyIndex.model");
 
 const createQuote = async (req, res) => {
   try {

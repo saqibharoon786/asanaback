@@ -1,5 +1,120 @@
 const express = require("express");
-const companyModel = require("../../models/company/companyIndex.model"); // Adjust the import to point to the correct Lead model
+const companyModel = require("../models/company/companyIndex.model"); // Adjust the import to point to the correct Lead model
+
+
+const createLead = async (req, res) => {
+  try {
+    const companyId = req.user.companyId;
+    const userId = req.user.userId; 
+    const user = req.user; 
+    const {
+      lead_Client,
+      lead_Organization,
+      lead_Title,
+      lead_Source,
+    } = req.body;
+
+    // Create a new lead document
+    const savedLead = await companyModel.Lead.create({
+      companyId,
+      lead_Creater : userId,
+      lead_Client,
+      lead_Organization,
+      lead_Title,
+      lead_Source,
+      lead_Label: "Hot",
+    });
+
+    return res.status(201).json({
+      success: true,
+      status: 201,
+      message: "Lead created successfully",
+      information: {
+        savedLead
+      },
+    });
+  } catch (error) {
+    console.error("Error creating lead:", error);
+    return res.status(500).json({
+      success: false,
+      status: 500,
+      message: error.message,
+    });
+  }
+};
+
+const addOptionalDataToLead = async (req, res) => {
+  try {
+    const { leadId } = req.params;
+    const {
+      lead_Demography,
+      lead_Behaviour,
+      lead_Action,
+      lead_AttributesOrAction,
+      lead_Notes,
+      lead_Pipeline, // Accepting lead_Pipeline updates
+    } = req.body;
+
+    // Find the lead by ID
+    const lead = await companyModel.Lead.findById(leadId);
+    if (!lead) {
+      return res.status(404).json({
+        success: false,
+        status: 404,
+        message: "Lead not found",
+      });
+    }
+
+    // Update the lead with optional data
+    if (lead_Demography) {
+      lead.lead_Demography = { ...lead.lead_Demography, ...lead_Demography };
+    }
+    if (lead_Behaviour) {
+      lead.lead_Behaviour = { ...lead.lead_Behaviour, ...lead_Behaviour };
+    }
+    if (lead_Action) {
+      lead.lead_Action = { ...lead.lead_Action, ...lead_Action };
+    }
+    if (lead_AttributesOrAction) {
+      lead.lead_AttributesOrAction = { ...lead.lead_AttributesOrAction, ...lead_AttributesOrAction };
+    }
+    if (lead_Notes) {
+      lead_Notes.forEach(note => {
+        lead.lead_Notes.push({
+          note: note, // Add the note content
+          note_CreatedAt: new Date(), // Explicitly set the creation date
+        });
+      });
+    }
+    if (lead_Pipeline) {
+      lead_Pipeline.forEach(stage => {
+        lead.lead_Pipeline.push({
+          stage_Name: stage.stage_Name, // Add the stage name
+          stage_Detail: stage.stage_Detail, // Add the stage detail
+          stage_CreatedAt: new Date(), // Explicitly set the creation date
+        });
+      });
+    }
+
+    await lead.save(); // Save the updated lead document
+
+    return res.status(200).json({
+      success: true,
+      status: 200,
+      message: "Optional data added successfully",
+      updatedLead: lead,
+    });
+  } catch (error) {
+    console.error("Error adding optional data:", error);
+    return res.status(500).json({
+      success: false,
+      status: 500,
+      message: error.message,
+    });
+  }
+};
+
+
 
 const getAllLeads = async (req, res) => {
   try {
@@ -76,59 +191,6 @@ const approveLeadById = async (req, res) => {
     });
   }
 };
-
-
-const createLead = async (req, res) => {
-  try {
-    const companyId = req.user.companyId;
-    const user = req.user; 
-    const {
-      lead_Name,
-      lead_Scope,
-      lead_InstallationTime,
-      lead_ProblemDefinition,
-      lead_BankTransfer,
-      lead_DateMentioned,
-      lead_Reviews,
-      lead_Client,
-    } = req.body;
-
-    // Create a new lead document
-    const savedLead = await companyModel.Lead.create({
-      companyId,
-      lead_Name,
-      lead_Creater: {
-        name: user.name,
-        email: user.email,
-        phone: user.contact || user.phone, 
-      },
-      lead_Scope,
-      lead_InstallationTime,
-      lead_ProblemDefinition,
-      lead_BankTransfer,
-      lead_DateMentioned,
-      lead_Reviews,
-      lead_Client,
-    });
-
-    return res.status(201).json({
-      success: true,
-      status: 201,
-      message: "Lead created successfully",
-      information: {
-        savedLead
-      },
-    });
-  } catch (error) {
-    console.error("Error creating lead:", error);
-    return res.status(500).json({
-      success: false,
-      status: 500,
-      message: error.message,
-    });
-  }
-};
-
 const getLeadById = async (req, res) => {
   try {
     const companyId = req.user.companyId;
@@ -164,9 +226,6 @@ const getLeadById = async (req, res) => {
     });
   }
 };
-
-
-
 const deleteLead = async (req, res) => {
   try {
     const companyId = req.user.companyId;
@@ -214,7 +273,8 @@ const lead = {
   getAllLeads,
   getLeadById,
   deleteLead,
-  approveLeadById
+  approveLeadById,
+  addOptionalDataToLead
 };
 
 module.exports = lead;

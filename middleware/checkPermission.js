@@ -15,6 +15,7 @@ const checkPermission = (requiredPermission) => {
     } else if (urlPath.includes('product')) {
       resource = 'product';
     }
+    console.log(resource)
     // Check if the resource exists in the user's permissions
     if (user.permissions[resource] && user.permissions[resource].includes(requiredPermission)) {
       return next();

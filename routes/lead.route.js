@@ -1,53 +1,51 @@
 const express = require("express");
 const router = express.Router();
-const controller = require("../../controllers/index.controller");
-const upload = require("../../config/multer");
-const passport = require("../../middleware/passportAuth.middleware");
-const middleware = require("../../middleware/index.middleware");
-
-// //
-// router.get(
-//   "/view-lead",
-//   passport.authenticate("jwt", { session: false }),
-//   middleware.checkPermission("read"), 
-//   (req, res) => {
-//     res.send("Leads Data");
-//   }
-// );
+const controller = require("../controllers/index.controller");
+const upload = require("../config/multer");
+const passport = require("../middleware/passportAuth.middleware");
+const middleware = require("../middleware/index.middleware");
 
 router.post(
   "/create-lead",
   passport.authenticate("jwt", { session: false }),
   middleware.checkPermission("create"), 
-  controller.adminController.lead.createLead
+  controller.lead.createLead
 );
+
+router.patch(
+  "/update/:leadId",
+  passport.authenticate("jwt", { session: false }),
+  middleware.checkPermission("update"), 
+  controller.lead.addOptionalDataToLead
+);
+
 
 router.get(
   "/all-leads",
   passport.authenticate("jwt", { session: false }),
   middleware.checkPermission("read"), 
-  controller.adminController.lead.getAllLeads
+  controller.lead.getAllLeads
 );
 
 router.get(
   '/:leadId',
   passport.authenticate('jwt', { session: false }),
   middleware.checkPermission("read"), 
-  controller.adminController.lead.getLeadById
+  controller.lead.getLeadById
 )
 
 router.patch(
   "/approve/:leadId",
   passport.authenticate("jwt", { session: false }),
   middleware.checkPermission("update"), 
-  controller.adminController.lead.approveLeadById
+  controller.lead.approveLeadById
 );
 
 router.delete(
   "/delete/:leadId",
   passport.authenticate("jwt", { session: false }),
   middleware.checkPermission("delete"), 
-  controller.adminController.lead.deleteLead,
+  controller.lead.deleteLead,
 );
 
 module.exports = router;

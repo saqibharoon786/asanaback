@@ -1,6 +1,5 @@
 const express = require("express");
-const projectModel = require("../../models/company/companyIndex.model");
-const companyModel = require("../../models/company/companyIndex.model");
+const companyModel = require("../models/company/companyIndex.model");
 
 //////////////////////////////////// Admin Controllers ///////////////////////////////////////////
 const addProject = async (req, res) => {
@@ -16,7 +15,7 @@ const addProject = async (req, res) => {
       });
     }
 
-    const existingProject = await projectModel.Project.findOne({
+    const existingProject = await companyModel.Project.findOne({
       project_Name,
     });
 
@@ -28,7 +27,7 @@ const addProject = async (req, res) => {
       });
     }
 
-    const existingDepartment = await projectModel.Department.findOne({
+    const existingDepartment = await companyModel.Department.findOne({
       department_Name: project_Department,
     });
 
@@ -40,7 +39,7 @@ const addProject = async (req, res) => {
       });
     }
 
-    const newProject = await projectModel.Project.create({
+    const newProject = await companyModel.Project.create({
       project_Name,
       project_Department,
     });
@@ -78,7 +77,7 @@ const addProjectEmployee = async (req, res) => {
     }
 
     // Find the project by name
-    const project = await projectModel.Project.findOne({
+    const project = await companyModel.Project.findOne({
       project_Name,
     });
 
@@ -120,7 +119,7 @@ const addProjectEmployee = async (req, res) => {
 const getAllProjects = async (req, res) => {
   try {
     // Fetch all projects, including the embedded 'project_Employees' field
-    const projects = await projectModel.Project.find();
+    const projects = await companyModel.Project.find();
 
     if (!projects || projects.length === 0) {
       return res.status(200).json({
