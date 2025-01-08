@@ -51,11 +51,23 @@ const addCompany = async (req, res) => {
       },
     });
 
+    // Add default departments
+    const defaultDepartments = ["Sales", "HR", "Marketing", "Web-Dev"];
+
+    const departmentPromises = defaultDepartments.map(departmentName => {
+      return companyModel.Department.create({
+        companyId,
+        department_Name: departmentName,
+      });
+    });
+
+    await Promise.all(departmentPromises);
+
     return res.status(201).json({
       success: true,
       status: 201,
       message: "Company added successfully",
-      information: newCompany,
+      information: { newCompany },
     });
   } catch (error) {
     console.error("Error adding company:", error);
@@ -79,7 +91,13 @@ const addAdminToCompany = async (req, res) => {
       employee_Contact,
       employee_Address,
     } = req.body;
-
+    const defaultPermissions = {
+      invoice: ["create", "read", "update", "delete"],
+      lead: ["create", "read", "update", "delete"],
+      quote: ["create", "read", "update", "delete"],
+      product: ["create", "read", "update", "delete"],
+      department: ["create", "read", "update", "delete"]
+    };
 
     // Check if the employee image is present in req.file
     if (!req.file) {
@@ -119,6 +137,7 @@ const addAdminToCompany = async (req, res) => {
         filePath: admin_ImagePath,
       },
       access: employee_Access,
+      permissions: defaultPermissions,
     });
 
     return res.status(201).json({
@@ -136,6 +155,7 @@ const addAdminToCompany = async (req, res) => {
     });
   }
 };
+
 
 
 const company = {

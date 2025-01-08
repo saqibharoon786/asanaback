@@ -6,12 +6,12 @@ const passport = require("../middleware/passportAuth.middleware");
 const middleware = require("../middleware/index.middleware");
 
 
-router.post(
-  "/add-department",
-  passport.authenticate("jwt", { session: false }),
-  middleware.checkPermission("create"),
-  controller.department.addDepartment
-);
+// router.post(
+//   "/add-department",
+//   passport.authenticate("jwt", { session: false }),
+//   middleware.checkPermission("create"),
+//   controller.department.addDepartment
+// );
 
 
 router.get(
@@ -20,7 +20,6 @@ router.get(
   middleware.checkPermission("read"),
   controller.department.getDepartments
 );
-
 
 router.patch(
   "/add-employee",

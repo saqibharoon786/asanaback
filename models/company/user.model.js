@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema(
     image: { filePath: { type: String } },
     access: {
       type: String,
-      enum: ["SuperAdmin", "Admin"],
+      enum: ["SuperAdmin", "Admin", "Sales", "HR", "Marketing", "Web-Dev"],
     },
     permissions: {
       invoice: { type: [String], default: [] },
@@ -20,6 +20,7 @@ const userSchema = new mongoose.Schema(
       quote: { type: [String], default: [] },
       product: { type: [String], default: [] },
       department: { type: [String], default: [] },
+      company: { type: [String], default: [] },
     },
     deleted: { type: Boolean, default: false },
   },

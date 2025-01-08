@@ -3,54 +3,53 @@ const companyModel = require("../models/company/companyIndex.model"); // Import 
 const utils = require("../utils/utilsIndex");
 
 // Add a new department
-const addDepartment = async (req, res) => {
-  try {
-    const companyId = req.user.companyId;
+// const addDepartment = async (req, res) => {
+//   try {
+//     const companyId = req.user.companyId;
+//     const { department_Name } = req.body;
 
-    const { department_Name } = req.body;
+//     if (!department_Name) {
+//       return res.status(400).json({
+//         success: false,
+//         status: 400,
+//         message: "Department name is required",
+//       });
+//     }
 
-    if (!department_Name) {
-      return res.status(400).json({
-        success: false,
-        status: 400,
-        message: "Department name is required",
-      });
-    }
+//     const department = await companyModel.Department.findOne({
+//       department_Name,
+//     });
 
-    const department = await companyModel.Department.findOne({
-      department_Name,
-    });
+//     if (department) {
+//       return res.status(409).json({
+//         success: false,
+//         status: 409,
+//         message: "Department already exists",
+//       });
+//     }
 
-    if (department) {
-      return res.status(409).json({
-        success: false,
-        status: 409,
-        message: "Department already exists",
-      });
-    }
+//     const newDepartment = await companyModel.Department.create({
+//       department_Name,
+//       companyId: companyId
+//     });
 
-    const newDepartment = await companyModel.Department.create({
-      department_Name,
-      companyId: companyId
-    });
-
-    return res.status(201).json({
-      success: true,
-      status: 201,
-      message: "Department created successfully",
-      information: {
-        newDepartment: newDepartment,
-      },
-    });
-  } catch (error) {
-    console.error("Error creating department:", error);
-    return res.status(500).json({
-      success: false,
-      status: 500,
-      message: error.message,
-    });
-  }
-};
+//     return res.status(201).json({
+//       success: true,
+//       status: 201,
+//       message: "Department created successfully",
+//       information: {
+//         newDepartment: newDepartment,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Error creating department:", error);
+//     return res.status(500).json({
+//       success: false,
+//       status: 500,
+//       message: error.message,
+//     });
+//   }
+// };
 
 // Add a new employee to a department
 const addEmployeeToDepartment = async (req, res) => {
@@ -119,9 +118,12 @@ const addEmployeeToDepartment = async (req, res) => {
     const userId = await utils.generateUniqueUserId(employee_Name);
     const hashedPassword = await bcrypt.hash(employee_Password, 10);
 
+
+    const accessLevel = department_Name;
+
     // Create new employee record
     const newUser = await companyModel.User.create({
-      companyId:companyId,
+      companyId: companyId,
       name: employee_Name,
       userId,
       email: employee_Email,
@@ -130,9 +132,9 @@ const addEmployeeToDepartment = async (req, res) => {
       address: employee_Address,
       image: { filePath: employee_ImagePath },
       department: department_Name,
+      access: accessLevel, 
     });
 
-    // Add employee to department's employee list
     department.department_Employees.push({
       userId,
       employee_Designation,
@@ -154,6 +156,7 @@ const addEmployeeToDepartment = async (req, res) => {
     });
   }
 };
+
 
 
 // Get all employees
@@ -276,7 +279,6 @@ const deleteEmployee = async (req, res) => {
     });
   }
 };
-
 
 const getEmployeeInformation = async (req, res) => {
   try {
@@ -426,7 +428,7 @@ const updateEmployee = async (req, res) => {
 
 
 const department = {
-  addDepartment,
+  // addDepartment,
   addEmployeeToDepartment,
   getAllEmployees,
   getDepartments,
