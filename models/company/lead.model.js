@@ -107,7 +107,7 @@ const leadSchema = new mongoose.Schema(
         type: Boolean,
       },
       competitor: {
-        type: String,
+        type: Boolean,
       },
       budget_Below_Threshold: {
         type: Boolean,

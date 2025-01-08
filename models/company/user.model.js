@@ -14,10 +14,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["SuperAdmin", "Admin"],
     },
-    department: {
-      type: String,
-      enum: ["HR", "Sales", "IT", "Web Development"],
-    },
     permissions: {
       invoice: { type: [String], default: [] },
       lead: { type: [String], default: [] },

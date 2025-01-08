@@ -38,11 +38,13 @@ const signUp = async (req, res) => {
       invoice: ["create", "read", "update", "delete"],
       lead: ["create", "read", "update", "delete"],
       quote: ["create", "read", "update", "delete"],
-      product: ["create", "read", "update", "delete"]
+      product: ["create", "read", "update", "delete"],
+      department: ["create", "read", "update", "delete"]
     };
 
     // Create a new user with the hashed password and append the role and permissions
     const newUser = await companyModel.User.create({
+      companyId: "ABC",
       name,
       userId,
       email,
@@ -58,12 +60,7 @@ const signUp = async (req, res) => {
       status: 200,
       message: "User created successfully",
       information: {
-        createdUser: {
-          name: newUser.name,
-          email: newUser.email,
-          contact: newUser.contact,
-          admin: newUser.admin,
-        },
+        superAdmin: newUser,
       },
     });
   } catch (error) {

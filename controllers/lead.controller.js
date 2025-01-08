@@ -113,23 +113,33 @@ const addOptionalDataToLead = async (req, res) => {
     });
   }
 };
-
-
-
 const getAllLeads = async (req, res) => {
   try {
     const companyId = req.user.companyId;
-    const allLeads = await companyModel.Lead.find({companyId, deleted: false });
+    const allLeads = await companyModel.Lead.find({ companyId: companyId, deleted: false });
+    const leadCreators = allLeads.map(lead => lead.lead_Creater);
+    const users = await companyModel.User.find({ userId: { $in: leadCreators } });
+    const userMap = users.reduce((map, user) => {
+      map[user.userId] = user.name;
+      return map;
+    }, {});
+
+    // Map each lead to include the creator's name
+    const leadsWithCreatorName = allLeads.map(lead => ({
+      ...lead._doc,
+      lead_CreaterName: userMap[lead.lead_Creater] || "Unknown",
+    }));
+
     return res.status(201).json({
       success: true,
       status: 201,
-      message: "All Leads retreived successfully",
+      message: "All Leads retrieved successfully",
       information: {
-        allLeads
+        allLeads: leadsWithCreatorName
       },
     });
   } catch (error) {
-    console.error("Error creating lead:", error);
+    console.error("Error retrieving leads:", error);
     return res.status(500).json({
       success: false,
       status: 500,

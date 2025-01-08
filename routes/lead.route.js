@@ -19,7 +19,6 @@ router.patch(
   controller.lead.addOptionalDataToLead
 );
 
-
 router.get(
   "/all-leads",
   passport.authenticate("jwt", { session: false }),
