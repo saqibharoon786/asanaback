@@ -13,7 +13,7 @@ const createEvent = async (req, res) => {
       end_Time,
       event_Description,
       companyId,
-      createdBy: userId,
+      event_Creator: userId,
     });
 
     const savedEvent = await newEvent.save();
