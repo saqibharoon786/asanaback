@@ -104,7 +104,7 @@ const createInvoice = async (req, res) => {
 const getAllInvoices = async (req, res) => {
   try {
     const companyId = req.user.companyId;
-    var Invoices = await companyModel.Invoice.find({ companyId, deleted: false });
+    var Invoices = await companyModel.Invoice.find({ companyId: companyId, deleted: false });
 
     if (!Invoices || Invoices.length === 0) {
       return res.status(200).json({

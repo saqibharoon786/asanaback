@@ -206,6 +206,7 @@ const approveQuoteById = async (req, res) => {
     }
 
     const newInvoice = await companyModel.Invoice.create({
+      companyId: companyId,
       invoice_Identifier: quote.quote_Identifier,
       invoice_Creater: quote.quote_Creater,
       invoice_Client: quote.quote_Client,
