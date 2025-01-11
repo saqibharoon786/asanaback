@@ -7,53 +7,16 @@ const middleware = require("../../middleware/index.middleware");
 // Admin Department routes
 router.post(
   "/create-package",
-  //   passport.authenticate("jwt", { session: false }),
-  //   middleware.adminRoleCheck,
+  passport.authenticate("jwt", { session: false }),
+  middleware.superAdminAccessCheck,
   controller.companyController.package.addPackages
 );
 
-// router.get(
-//   "/get-departments",
-//   passport.authenticate("jwt", { session: false }),
-//   middleware.adminRoleCheck,
-//   controller.adminController.department.getDepartments
-// );
-
-// router.patch(
-//   "/add-employee",
-//   passport.authenticate("jwt", { session: false }),
-//   middleware.adminRoleCheck,
-//   upload.single('employee_Image'),
-//   controller.adminController.department.addEmployeeToDepartment
-// );
-
-// router.delete(
-//   "/delete-employee",
-//   passport.authenticate("jwt", { session: false }),
-//   middleware.adminRoleCheck,
-//   controller.adminController.department.deleteEmployee
-// );
-
-// router.get(
-//   "/get-employees",
-//   passport.authenticate("jwt", { session: false }),
-//   middleware.adminRoleCheck,
-//   controller.adminController.department.getAllEmployees
-// );
-
-// router.patch(
-//   "/update-employee/:userId",
-//   passport.authenticate("jwt", { session: false }),
-//   middleware.adminRoleCheck,
-//   upload.single('employee_Image'),
-//   controller.adminController.department.updateEmployee
-// );
-
-// router.get(
-//   "/get-employee/:userId",
-//   passport.authenticate("jwt", { session: false }),
-//   middleware.adminRoleCheck,
-//   controller.adminController.department.getEmployeeInformation
-// );
+router.get(
+  "/get-packages",
+  passport.authenticate("jwt", { session: false }),
+  middleware.superAdminAccessCheck,
+  controller.companyController.package.getPackages
+);
 
 module.exports = router;

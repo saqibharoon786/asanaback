@@ -2,14 +2,30 @@ const bcrypt = require("bcrypt");
 const companyModel = require("../../models/company/companyIndex.model");
 const utils = require("../../utils/utilsIndex");
 
+const getCompanies = async (req, res) => {
+  try {
+    const companies = await companyModel.Company.find();
+
+    return res.status(201).json({
+      success: true,
+      status: 201,
+      message: "Companies retreived successfully",
+      information: { companies: companies },
+    });
+  } catch (error) {
+    console.error("Error adding company:", error);
+    return res.status(500).json({
+      success: false,
+      status: 500,
+      message: error.message,
+    });
+  }
+};
+
 const addCompany = async (req, res) => {
   try {
-    const {
-      company_Name,
-      company_Email,
-      company_Address,
-      package_Type,
-    } = req.body;
+    const { company_Name, company_Email, company_Address, package_Type } =
+      req.body;
 
     const company_ImagePath = `/uploads/company/${req.file.filename}`;
 
@@ -54,7 +70,7 @@ const addCompany = async (req, res) => {
     // Add default departments
     const defaultDepartments = ["Sales", "HR", "Marketing", "Web-Dev"];
 
-    const departmentPromises = defaultDepartments.map(departmentName => {
+    const departmentPromises = defaultDepartments.map((departmentName) => {
       return companyModel.Department.create({
         companyId,
         department_Name: departmentName,
@@ -97,7 +113,7 @@ const addAdminToCompany = async (req, res) => {
       quote: ["create", "read", "update", "delete"],
       product: ["create", "read", "update", "delete"],
       department: ["create", "read", "update", "delete"],
-      event: ["create", "read", "update", "delete"]
+      event: ["create", "read", "update", "delete"],
     };
 
     // Check if the employee image is present in req.file
@@ -116,7 +132,9 @@ const addAdminToCompany = async (req, res) => {
     const userId = await utils.generateUniqueUserId(employee_Name);
     const hashedPassword = await bcrypt.hash(employee_Password, 10);
 
-    const existingEmployeeEmail = await companyModel.User.findOne({ email: employee_Email });
+    const existingEmployeeEmail = await companyModel.User.findOne({
+      email: employee_Email,
+    });
     if (existingEmployeeEmail) {
       return res.status(409).json({
         success: false,
@@ -157,11 +175,10 @@ const addAdminToCompany = async (req, res) => {
   }
 };
 
-
-
 const company = {
+  getCompanies,
   addCompany,
-  addAdminToCompany
+  addAdminToCompany,
 };
 
 module.exports = company;

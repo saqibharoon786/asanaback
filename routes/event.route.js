@@ -40,4 +40,11 @@ router.get(
   controller.event.getEventById
 );
 
+router.get(
+  '/get-user-events',
+  passport.authenticate("jwt",{session:false}),
+  //middleware.checkPermission("read"),
+  controller.event.getEventsByUserId
+)
+
 module.exports = router;

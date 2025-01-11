@@ -1,5 +1,25 @@
 const companyModel = require("../../models/company/companyIndex.model");
 
+const getPackages = async (req, res) => {
+  try {
+    const packages = await companyModel.Package.find();
+
+    return res.status(201).json({
+      success: true,
+      status: 201,
+      message: "Package created successfully.",
+      information: { packages: packages },
+    });
+  } catch (error) {
+    console.error("Error creating package:", error);
+    return res.status(500).json({
+      success: false,
+      status: 500,
+      message: error.message,
+    });
+  }
+};
+
 const addPackages = async (req, res) => {
   try {
     const {
@@ -56,6 +76,7 @@ const addPackages = async (req, res) => {
 
 const packages = {
   addPackages,
+  getPackages,
 };
 
 module.exports = packages;

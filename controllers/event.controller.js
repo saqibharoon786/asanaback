@@ -13,7 +13,7 @@ const createEvent = async (req, res) => {
       end_Time,
       event_Description,
       companyId,
-      event_Creator: userId,
+      userId,
     });
 
     const savedEvent = await newEvent.save();
@@ -179,6 +179,50 @@ const deleteEvent = async (req, res) => {
   }
 };
 
+//Get EVent By UserId 
+const getEventsByUserId = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    // Get the current date and time
+    const currentTime = new Date();
+
+    // Fetch events where either time has passed or event_Read is false
+    const events = await companyModel.Event.find({
+      userId: userId,
+      $or: [
+        { end_Time: { $lt: currentTime } }, // Time has passed
+        { event_Read: false },             // Event is not read
+      ],
+    });
+
+    if (!events || events.length === 0) {
+      return res.status(404).json({
+        success: false,
+        status: 404,
+        message: "No matching events found.",
+        information: { events: [] },
+      });
+    }
+
+    // Respond with the matched events
+    return res.status(200).json({
+      success: true,
+      status: 200,
+      message: "Matching events retrieved successfully.",
+      information: { events },
+    });
+  } catch (error) {
+    console.error("Error fetching events:", error);
+    return res.status(500).json({
+      success: false,
+      status: 500,
+      message: error.message,
+    });
+  }
+};
+
+
 
 // Export the controller functions
 const event = {
@@ -187,6 +231,7 @@ const event = {
   getEventById,
   updateEvent,
   deleteEvent,
+  getEventsByUserId
 };
 
 module.exports=event
