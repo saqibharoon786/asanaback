@@ -11,6 +11,7 @@ const product = require("./product.route");
 const lead = require("./lead.route");
 const quote = require("./quote.route");
 const invoice  = require("./invoice.route");
+const event  = require("./event.route");
 
 // router.use("/", (req, res) => {
 //   res.send("HOME");
@@ -26,5 +27,6 @@ router.use("/product", product);
 router.use("/lead", lead);
 router.use("/quote", quote);
 router.use("/invoice", invoice);
+router.use("/event", event);
 
 module.exports = router;

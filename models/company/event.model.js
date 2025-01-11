@@ -3,12 +3,20 @@ const mongoose = require("mongoose");
 const eventSchema = new mongoose.Schema(
   {
     companyId: { type: String },
-    event_Name: { type: String },
-    event_Description: { type: String },
-    event_organizer: { type: String },
-    event_location: { type: String },
-    event_Date: { type: Date },
-    event_Image: { filePath: { type: String } },
+    userId: { type: String },
+    event_Title: {
+      type: String,
+    },
+    start_Time: {
+      type: Date,
+      default: Date.now,
+    },
+    end_Time: {
+      type: Date,
+    },
+    event_Description: {
+      type: String,
+    },
     deleted: { type: Boolean, default: false },
   },
   {

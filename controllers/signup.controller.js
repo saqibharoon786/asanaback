@@ -40,7 +40,8 @@ const signUp = async (req, res) => {
       quote: ["create", "read", "update", "delete"],
       product: ["create", "read", "update", "delete"],
       department: ["create", "read", "update", "delete"],
-      company: ["create", "read", "update", "delete"]
+      company: ["create", "read", "update", "delete"],
+      event: ["create", "read", "update", "delete"]
     };
 
     // Create a new user with the hashed password and append the role and permissions

@@ -1,23 +1,18 @@
 const express = require("express");
 const companyModel = require("../models/company/companyIndex.model"); // Adjust the import to point to the correct Lead model
 
-
 const createLead = async (req, res) => {
   try {
     const companyId = req.user.companyId;
-    const userId = req.user.userId; 
-    const user = req.user; 
-    const {
-      lead_Client,
-      lead_Organization,
-      lead_Title,
-      lead_Source,
-    } = req.body;
+    const userId = req.user.userId;
+    const user = req.user;
+    const { lead_Client, lead_Organization, lead_Title, lead_Source } =
+      req.body;
 
     // Create a new lead document
     const savedLead = await companyModel.Lead.create({
       companyId,
-      lead_Creater : userId,
+      lead_Creater: userId,
       lead_Client,
       lead_Organization,
       lead_Title,
@@ -30,7 +25,7 @@ const createLead = async (req, res) => {
       status: 201,
       message: "Lead created successfully",
       information: {
-        savedLead
+        savedLead,
       },
     });
   } catch (error) {
@@ -76,10 +71,13 @@ const addOptionalDataToLead = async (req, res) => {
       lead.lead_Action = { ...lead.lead_Action, ...lead_Action };
     }
     if (lead_AttributesOrAction) {
-      lead.lead_AttributesOrAction = { ...lead.lead_AttributesOrAction, ...lead_AttributesOrAction };
+      lead.lead_AttributesOrAction = {
+        ...lead.lead_AttributesOrAction,
+        ...lead_AttributesOrAction,
+      };
     }
     if (lead_Notes) {
-      lead_Notes.forEach(note => {
+      lead_Notes.forEach((note) => {
         lead.lead_Notes.push({
           note: note, // Add the note content
           note_CreatedAt: new Date(), // Explicitly set the creation date
@@ -87,7 +85,7 @@ const addOptionalDataToLead = async (req, res) => {
       });
     }
     if (lead_Pipeline) {
-      lead_Pipeline.forEach(stage => {
+      lead_Pipeline.forEach((stage) => {
         lead.lead_Pipeline.push({
           stage_Name: stage.stage_Name, // Add the stage name
           stage_Detail: stage.stage_Detail, // Add the stage detail
@@ -116,16 +114,21 @@ const addOptionalDataToLead = async (req, res) => {
 const getAllLeads = async (req, res) => {
   try {
     const companyId = req.user.companyId;
-    const allLeads = await companyModel.Lead.find({ companyId: companyId, deleted: false });
-    const leadCreators = allLeads.map(lead => lead.lead_Creater);
-    const users = await companyModel.User.find({ userId: { $in: leadCreators } });
+    const allLeads = await companyModel.Lead.find({
+      companyId: companyId,
+      deleted: false,
+    });
+    const leadCreators = allLeads.map((lead) => lead.lead_Creater);
+    const users = await companyModel.User.find({
+      userId: { $in: leadCreators },
+    });
     const userMap = users.reduce((map, user) => {
       map[user.userId] = user.name;
       return map;
     }, {});
 
     // Map each lead to include the creator's name
-    const leadsWithCreatorName = allLeads.map(lead => ({
+    const leadsWithCreatorName = allLeads.map((lead) => ({
       ...lead._doc,
       lead_CreaterName: userMap[lead.lead_Creater] || "Unknown",
     }));
@@ -135,7 +138,7 @@ const getAllLeads = async (req, res) => {
       status: 201,
       message: "All Leads retrieved successfully",
       information: {
-        allLeads: leadsWithCreatorName
+        allLeads: leadsWithCreatorName,
       },
     });
   } catch (error) {
@@ -197,7 +200,8 @@ const approveLeadById = async (req, res) => {
     return res.status(500).json({
       success: false,
       status: 500,
-      message: error.message || "An error occurred while processing the request.",
+      message:
+        error.message || "An error occurred while processing the request.",
     });
   }
 };
@@ -236,6 +240,7 @@ const getLeadById = async (req, res) => {
     });
   }
 };
+
 const deleteLead = async (req, res) => {
   try {
     const companyId = req.user.companyId;
@@ -249,7 +254,7 @@ const deleteLead = async (req, res) => {
 
     // Find the lead by ID and mark it as deleted
     const lead = await companyModel.Lead.findById({
-      companyId, 
+      companyId,
       _id: leadId,
     });
     if (!lead) {
@@ -278,13 +283,104 @@ const deleteLead = async (req, res) => {
   }
 };
 
+const addNote = async (req, res) => {
+  try {
+    const { leadId } = req.params;
+    const { note } = req.body;
+
+    // Find the lead by ID and update the lead_Notes array
+    const updatedLead = await companyModel.Lead.findByIdAndUpdate(
+      leadId,
+      {
+        $push: {
+          lead_Notes: { note }, // Add the new note to the array
+        },
+      },
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedLead) {
+      return res.status(404).json({
+        success: false,
+        message: "Lead not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Note added successfully.",
+      data: updatedLead, // Return the updated lead
+    });
+  } catch (error) {
+    console.error("Error adding note:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "An error occurred while adding the note.",
+    });
+  }
+};
+
+const addPipelineDetail = async (req, res) => {
+  try {
+    const { leadId } = req.params; // Get the lead ID from the request parameters
+    const { stage_Name, stage_Detail } = req.body; // Extract pipeline details from the request body
+
+    // Validate the input
+    if (!stage_Name || !stage_Detail) {
+      return res.status(400).json({
+        success: false,
+        message: "Both stage_Name and stage_Detail are required.",
+      });
+    }
+
+    // Update the lead document by pushing a new stage into lead_Pipeline
+    const updatedLead = await companyModel.Lead.findByIdAndUpdate(
+      leadId, // Use the leadId directly
+      {
+        $push: {
+          lead_Pipeline: {
+            stage_Name,
+            stage_Detail,
+            stage_CreatedAt: new Date(), // Optional, override default if needed
+          },
+        },
+      },
+      { new: true, useFindAndModify: false } // Return the updated document
+    );
+
+    // If no lead was found, return a 404 error
+    if (!updatedLead) {
+      return res.status(404).json({
+        success: false,
+        message: "Lead not found.",
+      });
+    }
+
+    // Respond with the updated lead
+    return res.status(200).json({
+      success: true,
+      message: "Pipeline detail added successfully.",
+      data: updatedLead,
+    });
+  } catch (error) {
+    console.error("Error adding pipeline detail:", error);
+    return res.status(500).json({
+      success: false,
+      message:
+        error.message || "An error occurred while adding the pipeline detail.",
+    });
+  }
+};
+
 const lead = {
   createLead,
   getAllLeads,
   getLeadById,
   deleteLead,
   approveLeadById,
-  addOptionalDataToLead
+  addOptionalDataToLead,
+  addNote,
+  addPipelineDetail,
 };
 
 module.exports = lead;

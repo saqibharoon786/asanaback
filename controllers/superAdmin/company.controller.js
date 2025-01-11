@@ -96,7 +96,8 @@ const addAdminToCompany = async (req, res) => {
       lead: ["create", "read", "update", "delete"],
       quote: ["create", "read", "update", "delete"],
       product: ["create", "read", "update", "delete"],
-      department: ["create", "read", "update", "delete"]
+      department: ["create", "read", "update", "delete"],
+      event: ["create", "read", "update", "delete"]
     };
 
     // Check if the employee image is present in req.file

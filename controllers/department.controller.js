@@ -106,7 +106,9 @@ const addEmployeeToDepartment = async (req, res) => {
     }
 
     // Check for duplicate email
-    const existingEmployee = await companyModel.User.findOne({ email: employee_Email });
+    const existingEmployee = await companyModel.User.findOne({
+      email: employee_Email,
+    });
     if (existingEmployee) {
       return res.status(409).json({
         success: false,
@@ -118,8 +120,28 @@ const addEmployeeToDepartment = async (req, res) => {
     const userId = await utils.generateUniqueUserId(employee_Name);
     const hashedPassword = await bcrypt.hash(employee_Password, 10);
 
-
     const accessLevel = department_Name;
+
+    // Set default permissions based on department
+    const defaultPermissions = {
+      invoice: [],
+      lead: [],
+      quote: [],
+      product: [],
+      department: [],
+      company: [],
+    };
+
+    if (department_Name === "Sales") {
+      defaultPermissions.invoice = ["create", "read", "update", "delete"];
+      defaultPermissions.lead = ["create", "read", "update", "delete"];
+      defaultPermissions.quote = ["create", "read", "update", "delete"];
+      defaultPermissions.event = ["create", "read", "update", "delete"];
+      defaultPermissions.product = ["read"];
+    } else if (department_Name === "HR") {
+      defaultPermissions.department = ["create", "read", "update", "delete"];
+      defaultPermissions.event = ["create", "read", "update", "delete"];
+    }
 
     // Create new employee record
     const newUser = await companyModel.User.create({
@@ -132,7 +154,8 @@ const addEmployeeToDepartment = async (req, res) => {
       address: employee_Address,
       image: { filePath: employee_ImagePath },
       department: department_Name,
-      access: accessLevel, 
+      access: accessLevel,
+      permissions: defaultPermissions, // Assign permissions here
     });
 
     department.department_Employees.push({
@@ -156,8 +179,6 @@ const addEmployeeToDepartment = async (req, res) => {
     });
   }
 };
-
-
 
 // Get all employees
 const getAllEmployees = async (req, res) => {
