@@ -5,12 +5,16 @@ const createEvent = async (req, res) => {
   try {
     const companyId = req.user.companyId;
     const userId = req.user.userId;
-    const { event_Title, end_Time, event_Description } = req.body;
+    const { event_Title, start_Time, end_Time, event_Description } = req.body;
+
+    // Parse times as UTC
+    const parsedStartTime = new Date(start_Time);
+    const parsedEndTime = new Date(end_Time);
 
     const newEvent = await companyModel.Event.create({
       event_Title,
-      start_Time: Date.now(),
-      end_Time,
+      start_Time: parsedStartTime, // Store as UTC
+      end_Time: parsedEndTime,     // Store as UTC
       event_Description,
       companyId,
       userId,
@@ -31,6 +35,7 @@ const createEvent = async (req, res) => {
     });
   }
 };
+
 
 // Get All Calendar Events for a Specific Company
 const getAllEvents = async (req, res) => {
