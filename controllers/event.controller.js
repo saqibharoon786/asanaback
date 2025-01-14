@@ -7,7 +7,6 @@ const createEvent = async (req, res) => {
     const userId = req.user.userId;
     const { event_Title, start_Time, end_Time, event_Description } = req.body;
 
-    // Parse times as UTC
     const parsedStartTime = new Date(start_Time);
     const parsedEndTime = new Date(end_Time);
 
