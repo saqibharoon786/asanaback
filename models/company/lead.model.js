@@ -55,62 +55,79 @@ const leadSchema = new mongoose.Schema(
     lead_Status: {
       type: String,
       enum: ["Prospect", "Qualified", "Close-Won"],
+      default: "Prospect",
     },
     // Lead score calcualted by the following attributes -- START
     lead_Score: {
       type: Number,
+      default: 0,
     },
     lead_Demography: {
       company_Size: {
         type: Number,
+        default: 1,
       },
       industry_Match: {
         type: String,
+        default: "No",
       },
       location: {
         type: String,
+        default: "None",
       },
       job_Title: {
         type: String,
+        default: "None",
       },
       misaligned_Demographics: {
         type: Boolean,
+        default: false,
       },
     },
     lead_Behaviour: {
       visited_Pricing_Page: {
         type: Number,
+        default: 0,
       },
       downloaded_White_Paper: {
         type: String,
+        default: "None",
       },
       repeated_Website_Visits: {
         type: String,
+        default: "None",
       },
       ignore_Email_or_Unsubscribed: {
         type: String,
+        default: "None",
       },
     },
     lead_Action: {
       requested_Demo_or_Quote: {
         type: Boolean,
+        default: false,
       },
       attended_Sales_Call: {
         type: Boolean,
+        default: false,
       },
       opted_for_Trial_Services: {
         type: Boolean,
+        default: false,
       },
     },
     lead_AttributesOrAction: {
       invalid_Email_or_ContactInfo: {
         type: Boolean,
+        default: false,
       },
       competitor: {
         type: Boolean,
+        default: false,
       },
       budget_Below_Threshold: {
         type: Boolean,
+        default: false,
       },
     },
     lead_Notes: [

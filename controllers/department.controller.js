@@ -137,7 +137,7 @@ const addEmployeeToDepartment = async (req, res) => {
       defaultPermissions.lead = ["create", "read", "update", "delete"];
       defaultPermissions.quote = ["create", "read", "update", "delete"];
       defaultPermissions.event = ["create", "read", "update", "delete"];
-      defaultPermissions.product = ["read"];
+      defaultPermissions.product = ["create", "read", "update", "delete"];
     } else if (department_Name === "HR") {
       defaultPermissions.department = ["create", "read", "update", "delete"];
       defaultPermissions.event = ["create", "read", "update", "delete"];
