@@ -52,6 +52,9 @@ const leadSchema = new mongoose.Schema(
         "None",
       ],
     },
+    lead_Scope: {
+      type: String,
+    },
     lead_Status: {
       type: String,
       enum: ["Prospect", "Qualified", "Close-Won"],
@@ -68,8 +71,8 @@ const leadSchema = new mongoose.Schema(
         default: 1,
       },
       industry_Match: {
-        type: String,
-        default: "No",
+        type: Boolean,
+        default: false,
       },
       location: {
         type: String,
@@ -90,16 +93,16 @@ const leadSchema = new mongoose.Schema(
         default: 0,
       },
       downloaded_White_Paper: {
-        type: String,
-        default: "None",
+        type: Boolean,
+        default: false,
       },
       repeated_Website_Visits: {
-        type: String,
-        default: "None",
+        type: Boolean,
+        default: false,
       },
       ignore_Email_or_Unsubscribed: {
-        type: String,
-        default: "None",
+        type: Boolean,
+        default: false,
       },
     },
     lead_Action: {
@@ -140,15 +143,15 @@ const leadSchema = new mongoose.Schema(
       },
     ],
     lead_Pipeline: [
-        {
-          stage_Name: { type: String },
-          stage_Detail: { type: String },
-          stage_CreatedAt: {
-            type: Date,
-            default: Date.now,
-          }
+      {
+        stage_Name: { type: String },
+        stage_Detail: { type: String },
+        stage_CreatedAt: {
+          type: Date,
+          default: Date.now,
         },
-      ],
+      },
+    ],
     deleted: { type: Boolean, default: false },
   },
   { timestamps: true }

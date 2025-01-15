@@ -47,4 +47,11 @@ router.get(
   controller.event.getEventsByUserId
 )
 
+router.patch(
+  "/marked-as-read/:eventId",
+  passport.authenticate("jwt", { session: false }),
+  // middleware.checkPermission("update"),
+  controller.event.markAsRead
+);
+
 module.exports = router;

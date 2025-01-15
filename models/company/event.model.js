@@ -1,23 +1,19 @@
 const mongoose = require("mongoose");
+const moment = require("moment-timezone");
 
 const eventSchema = new mongoose.Schema(
   {
     companyId: { type: String },
     userId: { type: String },
-    event_Title: {
+    event_Title: { type: String },
+    start_Time: { 
       type: String,
+      default: () => moment().tz("Asia/Karachi").format(),
     },
-    start_Time: {
-      type: Date,
-      default: Date.now,
-    },
-    end_Time: {
-      type: Date,
-    },
-    event_Description: {
-      type: String,
-    },
+    end_Time: { type: String },
+    event_Description: { type: String },
     deleted: { type: Boolean, default: false },
+    marked_As_Read: { type: Boolean, default: false }, 
   },
   {
     timestamps: true,

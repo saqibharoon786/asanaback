@@ -59,4 +59,11 @@ router.get(
   controller.department.getEmployeeInformation
 );
 
+router.get(
+  "/get-sales-employees",
+  passport.authenticate("jwt", { session: false }),
+  // middleware.checkPermission("read"),
+  controller.department.getSalesEmployees
+);
+
 module.exports = router;

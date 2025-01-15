@@ -5,24 +5,21 @@ const createInvoice = async (req, res) => {
   const companyId = req.user.companyId;
   try {
     const user = req.user;
-    var invoice_TotalPrice = 0;
-    var tax = 0.05;
+    const {
+      invoice_Client,
+      invoice_Products,
+      invoice_Details,
+      invoice_InitialPayment,
+      invoice_BeforeTaxPrice,
+      invoice_AfterTaxPrice,
+      invoice_AfterDiscountPrice,
+    } = req.body;
 
-    var product_Tax = 0;
-    var product_TaxAmount = 0;
-    var product_DiscountedAmount = 0;
+    // Verify product existence and stock
+    for (const item of invoice_Products) {
+      const { product, quantity, product_AfterDiscountPrice } = item;
 
-    // Destructure data from request body
-    var { invoice_Client, invoice_Products, invoice_Details } = req.body;
-
-    // Loop through each product in invoice_Products array
-    for (var item of invoice_Products) {
-      product_DiscountedAmount = 0;
-      product_TaxAmount = 0;
-      var { product, quantity, product_Price, product_Discount } = item;
-
-      // Find product in the database
-      var dbProduct = await companyModel.Product.findOne({
+      const dbProduct = await companyModel.Product.findOne({
         product_Name: product,
         companyId,
       });
@@ -35,30 +32,27 @@ const createInvoice = async (req, res) => {
         });
       }
 
-      product_Tax = product_Price * quantity * tax;
-      item.product_Tax = product_Tax;
-      product_Price = (product_Price * quantity) + product_Tax;
-      product_DiscountedAmount = product_Price * (product_Discount / 100);
-      product_Price = product_Price - product_DiscountedAmount;
-      item.product_Discount = product_Discount;
-      item.product_FinalAmount = product_Price;
-
-      invoice_TotalPrice += item.product_FinalAmount;
+      if (dbProduct.product_StockQuantity < quantity) {
+        return res.status(400).json({
+          success: false,
+          status: 400,
+          message: `Insufficient stock for product '${product}'.`,
+        });
+      }
     }
 
-    // Get the total count of invoices created by this user
-    var invoiceCount = await companyModel.Invoice.countDocuments();
-    var invoice_Identifier = `${user.userId}-${invoiceCount + 1}`;
+    // Generate unique invoice identifier
+    const invoiceCount = await companyModel.Invoice.countDocuments();
+    const invoice_Identifier = `${user.userId}-${invoiceCount + 1}`;
 
-    // Prepare invoice details
-    var newInvoiceDetails = {
+    const newInvoiceDetails = {
       dateCreated: new Date(),
-      status: invoice_Details?.status || "Unpaid", // Default to "Pending" if not provided
+      status: invoice_Details?.status || "Unpaid",
     };
 
-    // Create a new invoice document
-    var newInvoice = await companyModel.Invoice.create({
-      companyId, 
+    // Save invoice
+    const newInvoice = await companyModel.Invoice.create({
+      companyId,
       invoice_Identifier,
       invoice_Creater: {
         name: user.name,
@@ -66,23 +60,28 @@ const createInvoice = async (req, res) => {
         contact: user.contact,
       },
       invoice_Client,
-      invoice_Products,
-      invoice_TotalPrice,
+      invoice_Products, // Pass products directly, including discount fields
+      invoice_BeforeTaxPrice,
+      invoice_AfterTaxPrice,
+      invoice_AfterDiscountPrice,
+      invoice_InitialPayment,
       invoice_Details: newInvoiceDetails,
     });
-    
 
-    // Correcting the loop to update product stock quantities
-    for (const item of newInvoice.invoice_Products) {
-      const product = await companyModel.Product.findOne({companyId, product_Name: item.product, deleted: false });
-    
+    // Update stock quantities
+    for (const item of invoice_Products) {
+      const product = await companyModel.Product.findOne({
+        companyId,
+        product_Name: item.product,
+        deleted: false,
+      });
+
       if (product) {
-        product.product_StockQuantity -= item.quantity; // Decrease stock quantity
-        await product.save(); // Save the updated product
+        product.product_StockQuantity -= item.quantity;
+        await product.save();
       }
     }
-    
-    // Send response with the created invoice
+
     return res.status(200).json({
       success: true,
       status: 200,

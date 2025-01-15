@@ -6,7 +6,7 @@ const createLead = async (req, res) => {
     const companyId = req.user.companyId;
     const userId = req.user.userId;
     const user = req.user;
-    const { lead_Client, lead_Organization, lead_Title, lead_Source } =
+    const { lead_Client, lead_Organization, lead_Title, lead_Source,lead_Scope } =
       req.body;
 
     // Create a new lead document
@@ -18,6 +18,7 @@ const createLead = async (req, res) => {
       lead_Title,
       lead_Source,
       lead_Label: "Hot",
+      lead_Scope,
     });
 
     return res.status(201).json({
@@ -47,70 +48,65 @@ const addOptionalDataToLead = async (req, res) => {
       lead_Action,
       lead_AttributesOrAction,
       lead_Notes,
-      lead_Pipeline, // Accepting lead_Pipeline updates
+      lead_Pipeline,
     } = req.body;
 
-    // Find the lead by ID
+    // Fetch the lead by ID to check existence before updating
     const lead = await companyModel.Lead.findById(leadId);
     if (!lead) {
       return res.status(404).json({
         success: false,
-        status: 404,
         message: "Lead not found",
       });
     }
 
-    // Update the lead with optional data
+    // Prepare update object
+    const update = {};
     if (lead_Demography) {
-      lead.lead_Demography = { ...lead.lead_Demography, ...lead_Demography };
+      update['lead_Demography'] = { ...lead.lead_Demography, ...lead_Demography };
     }
     if (lead_Behaviour) {
-      lead.lead_Behaviour = { ...lead.lead_Behaviour, ...lead_Behaviour };
+      update['lead_Behaviour'] = { ...lead.lead_Behaviour, ...lead_Behaviour };
     }
     if (lead_Action) {
-      lead.lead_Action = { ...lead.lead_Action, ...lead_Action };
+      update['lead_Action'] = { ...lead.lead_Action, ...lead_Action };
     }
     if (lead_AttributesOrAction) {
-      lead.lead_AttributesOrAction = {
-        ...lead.lead_AttributesOrAction,
-        ...lead_AttributesOrAction,
-      };
+      update['lead_AttributesOrAction'] = { ...lead.lead_AttributesOrAction, ...lead_AttributesOrAction };
     }
     if (lead_Notes) {
-      lead_Notes.forEach((note) => {
-        lead.lead_Notes.push({
-          note: note, // Add the note content
-          note_CreatedAt: new Date(), // Explicitly set the creation date
-        });
-      });
+      // Handle array updates for notes
+      update['$push'] = { 'lead_Notes': { $each: lead_Notes } };
     }
     if (lead_Pipeline) {
-      lead_Pipeline.forEach((stage) => {
-        lead.lead_Pipeline.push({
-          stage_Name: stage.stage_Name, // Add the stage name
-          stage_Detail: stage.stage_Detail, // Add the stage detail
-          stage_CreatedAt: new Date(), // Explicitly set the creation date
-        });
-      });
+      // Handle array updates for pipeline
+      update['$push'] = update['$push'] || {};
+      update['$push']['lead_Pipeline'] = { $each: lead_Pipeline };
     }
 
-    await lead.save(); // Save the updated lead document
+    // Perform the update atomically
+    const updatedLead = await companyModel.Lead.findByIdAndUpdate(leadId, update, { new: true });
+    if (!updatedLead) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to update the lead",
+      });
+    }
 
     return res.status(200).json({
       success: true,
-      status: 200,
       message: "Optional data added successfully",
-      updatedLead: lead,
+      data: updatedLead,
     });
   } catch (error) {
     console.error("Error adding optional data:", error);
     return res.status(500).json({
       success: false,
-      status: 500,
       message: error.message,
     });
   }
 };
+
 const getAllLeads = async (req, res) => {
   try {
     const companyId = req.user.companyId;
@@ -372,6 +368,82 @@ const addPipelineDetail = async (req, res) => {
   }
 };
 
+
+const leadTransfered = async (req, res) => {
+  try {
+    const { leadId } = req.params;
+    const user = req.user;
+    const { receivedById } = req.body; 
+    if (!receivedById) {
+      return res.status(400).json({
+        success: false,
+        message: "Receiver's user ID is required.",
+      });
+    }
+
+    console.log("here");
+    // Find the lead by ID
+    const lead = await companyModel.Lead.findById(leadId);
+    if (!lead) {
+      return res.status(404).json({
+        success: false,
+        message: "Lead not found.",
+      });
+    }
+
+    // Find the current user's designation from the department
+    const department = await companyModel.Department.findOne({ companyId: user.companyId });
+    const employee = department.department_Employees.find(
+      (emp) => emp.userId.toString() === user.userId.toString()
+    );
+
+    if (!employee) {
+      return res.status(404).json({
+        success: false,
+        message: "Employee not found in the department.",
+      });
+    }
+
+    // If the employee is a Team Lead, they can transfer the lead multiple times
+    if (employee.employee_Designation === 'Team Lead') {
+      // Team Lead can transfer the lead multiple times
+      lead.lead_TransferredBy.push({ userId: user.userId, transferredAt: new Date() });
+      lead.lead_Creater = receivedById;
+    } else {
+      // For non-Team Leads, only allow the transfer once
+      const alreadyTransferred = lead.lead_TransferredBy.some(
+        (transfer) => transfer.userId.toString() === user.userId.toString()
+      );
+
+      if (alreadyTransferred) {
+        return res.status(400).json({
+          success: false,
+          message: "You have already transferred this lead.",
+        });
+      }
+
+      // Proceed with the transfer for non-Team Leads
+      lead.lead_TransferredBy.push({ userId: user.userId, transferredAt: new Date() });
+      lead.lead_Creater = receivedById;
+    }
+
+    // Save the updated lead document
+    await lead.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Lead successfully transferred.",
+      lead,
+    });
+  } catch (error) {
+    console.error("Error transferring lead:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "An error occurred while transferring the lead.",
+    });
+  }
+};
+
 const lead = {
   createLead,
   getAllLeads,
@@ -381,6 +453,7 @@ const lead = {
   addOptionalDataToLead,
   addNote,
   addPipelineDetail,
+  leadTransfered,
 };
 
 module.exports = lead;

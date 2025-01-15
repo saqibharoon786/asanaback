@@ -61,4 +61,12 @@ router.post(
   controller.lead.addPipelineDetail
 );
 
+router.patch(
+  "/transfer-lead/:leadId",
+  passport.authenticate("jwt", { session: false }),
+  middleware.checkPermission("update"),
+  controller.lead.leadTransfered
+);
+
+
 module.exports = router;

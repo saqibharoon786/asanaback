@@ -447,6 +447,62 @@ const updateEmployee = async (req, res) => {
   }
 };
 
+const getSalesEmployees = async (req, res) => {
+  try {
+    const companyId = req.user.companyId;
+
+    // Query to find the Sales department for the given company
+    const salesDepartment = await companyModel.Department.findOne({
+      companyId: companyId,
+      department_Name: "Sales",
+    });
+
+    if (!salesDepartment) {
+      return res.status(404).json({
+        success: true,
+        message: "Sales department not found",
+        information: {
+          users: [],
+        },
+      });
+    }
+
+    // Extract user IDs from the department's employee list, filtering out any 'deleted' entries
+    const userIds = salesDepartment.department_Employees
+      .filter((emp) => !emp.deleted)
+      .map((emp) => emp.userId);
+
+    // Retrieve user details from the User model using the `userId` field
+    const users = await companyModel.User.find({
+      userId: { $in: userIds },
+    });
+
+    if (!users.length) {
+      return res.status(404).json({
+        success: true,
+        message: "No users found in Sales department",
+        information: {
+          users: [],
+        },
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Users retrieved successfully",
+      information: { users },
+    });
+  } catch (error) {
+    console.error("Error fetching sales employees:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+
 
 const department = {
   // addDepartment,
@@ -456,6 +512,8 @@ const department = {
   getEmployeeInformation,
   updateEmployee, 
   deleteEmployee,
+  getSalesEmployees
+  
 };
 
 module.exports = department;

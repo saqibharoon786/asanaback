@@ -1,25 +1,20 @@
-const companyModel = require("../models/company/companyIndex.model"); // Import correctly
-
+const companyModel = require("../models/company/companyIndex.model"); 
+const moment = require("moment-timezone");
 
 const createEvent = async (req, res) => {
   try {
     const companyId = req.user.companyId;
     const userId = req.user.userId;
-    const { event_Title, start_Time, end_Time, event_Description } = req.body;
+    const { event_Title, end_Time, event_Description } = req.body;
 
-    const parsedStartTime = new Date(start_Time);
-    const parsedEndTime = new Date(end_Time);
-
-    const newEvent = await companyModel.Event.create({
-      event_Title,
-      start_Time: parsedStartTime, // Store as UTC
-      end_Time: parsedEndTime,     // Store as UTC
-      event_Description,
+    const savedEvent = await companyModel.Event.create({
+      event_Title, 
+      end_Time: end_Time,
+      event_Description, 
       companyId,
       userId,
     });
 
-    const savedEvent = await newEvent.save();
     return res.status(201).json({
       success: true,
       message: "Event created successfully",
@@ -34,6 +29,9 @@ const createEvent = async (req, res) => {
     });
   }
 };
+
+
+
 
 
 // Get All Calendar Events for a Specific Company
@@ -195,8 +193,8 @@ const getEventsByUserId = async (req, res) => {
     const events = await companyModel.Event.find({
       userId: userId,
       $or: [
-        { end_Time: { $lt: currentTime } }, // Time has passed
-        { event_Read: false },             // Event is not read
+        { end_Time: { $lt: currentTime } }, 
+        { event_Read: false },             
       ],
     });
 
@@ -226,7 +224,36 @@ const getEventsByUserId = async (req, res) => {
   }
 };
 
+const markAsRead = async (req, res) => {
+  try {
+    const { eventId } = req.params;
 
+    const updatedEvent = await companyModel.Event.findOneAndUpdate(
+      { _id: eventId },
+      { marked_As_Read: true },
+      { new: true } 
+    );
+
+    if (!updatedEvent) {
+      return res.status(404).json({
+        success: false,
+        message: "Notification not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Notification marked as read.",
+      data: updatedEvent, // Return updated notification details
+    });
+  } catch (error) {
+    console.error("Error marking notification as read:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
 // Export the controller functions
 const event = {
@@ -235,7 +262,8 @@ const event = {
   getEventById,
   updateEvent,
   deleteEvent,
-  getEventsByUserId
+  getEventsByUserId,
+  markAsRead,
 };
 
 module.exports=event
