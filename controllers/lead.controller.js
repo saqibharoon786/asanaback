@@ -381,8 +381,6 @@ const leadTransfered = async (req, res) => {
       });
     }
 
-    console.log("here");
-    // Find the lead by ID
     const lead = await companyModel.Lead.findById(leadId);
     if (!lead) {
       return res.status(404).json({
@@ -391,22 +389,20 @@ const leadTransfered = async (req, res) => {
       });
     }
 
-    // Find the current user's designation from the department
     const department = await companyModel.Department.findOne({ companyId: user.companyId });
     const employee = department.department_Employees.find(
       (emp) => emp.userId.toString() === user.userId.toString()
     );
 
-    if (!employee) {
+    if (!employee && user.access !== 'Admin') {
       return res.status(404).json({
         success: false,
-        message: "Employee not found in the department.",
+        message: "User not authorized to transfer the lead.",
       });
     }
 
-    // If the employee is a Team Lead, they can transfer the lead multiple times
-    if (employee.employee_Designation === 'Team Lead') {
-      // Team Lead can transfer the lead multiple times
+    if (user.access === 'Admin' || employee.employee_Designation === 'Team Lead') {
+      // Allow Admins or Team Leads to transfer without restrictions
       lead.lead_TransferredBy.push({ userId: user.userId, transferredAt: new Date() });
       lead.lead_Creater = receivedById;
     } else {
@@ -443,6 +439,7 @@ const leadTransfered = async (req, res) => {
     });
   }
 };
+
 
 const lead = {
   createLead,
