@@ -174,7 +174,6 @@ const getInvoiceById = async (req, res) => {
   }
 };
 
-
 const setPaidInvoicebyId = async (req, res) => {
   try {
     const companyId = req.user.companyId;

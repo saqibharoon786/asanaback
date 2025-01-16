@@ -2,29 +2,26 @@ const express = require("express");
 const companyModel = require("../models/company/companyIndex.model");
 
 const createQuote = async (req, res) => {
+  const companyId = req.user.companyId;
   try {
-    const companyId = req.user.companyId;
     const user = req.user;
-    var quote_TotalPrice = 0;
-    var tax = 0.05;
+    const {
+      quote_Client,
+      quote_Products,
+      quote_Details,
+      quote_InitialPayment,
+      quote_BeforeTaxPrice,
+      quote_AfterTaxPrice,
+      quote_AfterDiscountPrice,
+    } = req.body;
 
-    var product_Tax = 0;
-    var product_TaxAmount = 0;
-    var product_DiscountedAmount = 0;
+    // Verify product existence and stock
+    for (const item of quote_Products) {
+      const { product, quantity, product_AfterDiscountPrice } = item;
 
-    // Destructure data from request body
-    var { quote_Client, quote_Products, quote_Details } = req.body;
-
-    // Loop through each product in quote_Products array
-    for (var item of quote_Products) {
-      product_DiscountedAmount = 0;
-      product_TaxAmount = 0;
-      var { product, quantity, product_Price, product_Discount } = item;
-
-      // Find product in the database
-      var dbProduct = await companyModel.Product.findOne({
-        companyId,
+      const dbProduct = await companyModel.Product.findOne({
         product_Name: product,
+        companyId,
       });
 
       if (!dbProduct) {
@@ -35,30 +32,27 @@ const createQuote = async (req, res) => {
         });
       }
 
-      product_Tax = product_Price * quantity * tax;
-      item.product_Tax = product_Tax;
-      product_Price = (product_Price * quantity) + product_Tax;
-      product_DiscountedAmount = product_Price * (product_Discount / 100);
-      product_Price = product_Price - product_DiscountedAmount;
-      item.product_Discount = product_Discount;
-      item.product_FinalAmount = product_Price;
-
-      quote_TotalPrice += item.product_FinalAmount;
+      if (dbProduct.product_StockQuantity < quantity) {
+        return res.status(400).json({
+          success: false,
+          status: 400,
+          message: `Insufficient stock for product '${product}'.`,
+        });
+      }
     }
 
-    // Get the total count of quotes created by this user
-    var quoteCount = await companyModel.Quote.countDocuments();
-    var quote_Identifier = `${user.userId}-${quoteCount + 1}`;
+    // Generate unique quote identifier
+    const quoteCount = await companyModel.Quote.countDocuments();
+    const quote_Identifier = `${user.userId}-${quoteCount + 1}`;
 
-    // Prepare quote details
-    var newQuoteDetails = {
+    const newQuoteDetails = {
       dateCreated: new Date(),
-      status: quote_Details?.status || "Pending", // Default to "Pending" if not provided
+      status: quote_Details?.status || "Pending",
     };
 
-    // Create a new quote document
-    var newQuote = await companyModel.Quote.create({
-      companyId, 
+    // Save quote
+    const newQuote = await companyModel.Quote.create({
+      companyId,
       quote_Identifier,
       quote_Creater: {
         name: user.name,
@@ -66,12 +60,28 @@ const createQuote = async (req, res) => {
         contact: user.contact,
       },
       quote_Client,
-      quote_Products,
-      quote_TotalPrice,
+      quote_Products, // Pass products directly, including discount fields
+      quote_BeforeTaxPrice,
+      quote_AfterTaxPrice,
+      quote_AfterDiscountPrice,
+      quote_InitialPayment,
       quote_Details: newQuoteDetails,
     });
 
-    // Send response with the created quote
+    // Update stock quantities
+    for (const item of quote_Products) {
+      const product = await companyModel.Product.findOne({
+        companyId,
+        product_Name: item.product,
+        deleted: false,
+      });
+
+      if (product) {
+        product.product_StockQuantity -= item.quantity;
+        await product.save();
+      }
+    }
+
     return res.status(200).json({
       success: true,
       status: 200,
@@ -93,15 +103,15 @@ const createQuote = async (req, res) => {
 const getAllQuotes = async (req, res) => {
   try {
     const companyId = req.user.companyId;
-    var quotes = await companyModel.Quote.find({companyId ,deleted: false });
+    var Quotes = await companyModel.Quote.find({companyId ,deleted: false });
 
-    if (!quotes || quotes.length === 0) {
+    if (!Quotes || Quotes.length === 0) {
       return res.status(200).json({
         success: true,
         status: 200,
         message: "No Quotes found",
         information: {
-          quotes: [],
+          Quotes: [],
         },
       });
     }
@@ -111,7 +121,7 @@ const getAllQuotes = async (req, res) => {
       status: 200,
       message: "Quotes retrieved successfully",
       information: {
-        quotes,
+        Quotes,
       },
     });
   } catch (error) {

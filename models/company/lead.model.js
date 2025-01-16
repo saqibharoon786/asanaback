@@ -4,9 +4,12 @@ const mongoose = require("mongoose");
 const leadSchema = new mongoose.Schema(
   {
     companyId: { type: String },
-    lead_TransferredBy: [
+    lead_TransferAndAssign: [
       {
-        userId: {
+        lead_TransferredByUserId: {
+          type: String,
+        },
+        lead_AssignedToUserId: {
           type: String,
         },
         transferredAt: {
@@ -39,18 +42,7 @@ const leadSchema = new mongoose.Schema(
     },
     lead_Source: {
       type: String,
-      enum: [
-        "Prospector",
-        "Lead Suggestions",
-        "Web Forms",
-        "Chatbot",
-        "Live Chat",
-        "Web Visitors",
-        "Campaigns",
-        "Marketplace",
-        "Messaging Inbox",
-        "None",
-      ],
+      enum: ["Whatsapp", "Emails", "Calls", "Website Forms", "References"],
     },
     lead_Scope: {
       type: String,

@@ -10,7 +10,7 @@ const quoteSchema = new mongoose.Schema(
     quote_Creater: {
       name: { type: String },
       email: { type: String },
-      contact: { type: String }
+      contact: { type: String },
     },
     quote_Client: {
       client_Name: { type: String },
@@ -25,23 +25,48 @@ const quoteSchema = new mongoose.Schema(
         },
         quantity: {
           type: Number,
+          default: 0,
         },
-        product_Price: {
+        product_BeforeTaxPrice: {
           type: Number,
-        },  
+          default: 0,
+        },
         product_Tax: {
           type: Number,
+          default: 0,
         },
-        
+        product_AfterTaxPrice: {
+          type: Number,
+          default: 0,
+        },
+        product_Tax: {
+          type: Number,
+          default: 0,
+        },
+        product_DiscountPercentage: {
+          type: Number,
+          default: 0,
+        },
         product_Discount: {
           type: Number,
-        },  
-        product_FinalAmount: {
+          default: 0,
+        },
+        product_AfterDiscountPrice: {
           type: Number,
-        },      
+          default: 0,
+        },
       },
     ],
-    quote_TotalPrice: {
+    quote_InitialPayment: {
+      type: Number,
+    },
+    quote_BeforeTaxPrice: {
+      type: Number,
+    },
+    quote_AfterTaxPrice: {
+      type: Number,
+    },
+    quote_AfterDiscountPrice: {
       type: Number,
     },
     quote_Details: {
@@ -52,9 +77,9 @@ const quoteSchema = new mongoose.Schema(
         default: "Pending",
       },
     },
-    deleted: { type: Boolean, default: false }
+    deleted: { type: Boolean, default: false },
   },
-  
+
   { timestamps: true }
 );
 

@@ -1,20 +1,25 @@
-const companyModel = require("../models/company/companyIndex.model"); 
-const moment = require("moment-timezone");
+const companyModel = require("../models/company/companyIndex.model"); // Import correctly
+
 
 const createEvent = async (req, res) => {
   try {
     const companyId = req.user.companyId;
     const userId = req.user.userId;
-    const { event_Title, end_Time, event_Description } = req.body;
+    const { event_Title, start_Time, end_Time, event_Description } = req.body;
 
-    const savedEvent = await companyModel.Event.create({
-      event_Title, 
-      end_Time: end_Time,
-      event_Description, 
+    const parsedStartTime = new Date(start_Time);
+    const parsedEndTime = new Date(end_Time);
+
+    const newEvent = await companyModel.Event.create({
+      event_Title,
+      start_Time: parsedStartTime, // Store as UTC
+      end_Time: parsedEndTime,     // Store as UTC
+      event_Description,
       companyId,
       userId,
     });
 
+    const savedEvent = await newEvent.save();
     return res.status(201).json({
       success: true,
       message: "Event created successfully",
@@ -29,9 +34,6 @@ const createEvent = async (req, res) => {
     });
   }
 };
-
-
-
 
 
 // Get All Calendar Events for a Specific Company
@@ -181,21 +183,23 @@ const deleteEvent = async (req, res) => {
   }
 };
 
-//Get EVent By UserId 
+
+
 const getEventsByUserId = async (req, res) => {
   try {
     const userId = req.user.userId;
-
-    // Get the current date and time
+    
+    // Get the current UTC time and subtract 5 hours
     const currentTime = new Date();
+    currentTime.setHours(currentTime.getHours() +5);  // Adjust UTC time
+    const adjustedTime = currentTime.toISOString();    // Convert to ISO format
+   
 
-    // Fetch events where either time has passed or event_Read is false
+    // Fetch only expired events that are unread
     const events = await companyModel.Event.find({
       userId: userId,
-      $or: [
-        { end_Time: { $lt: currentTime } }, 
-        { event_Read: false },             
-      ],
+      end_Time: { $lt: adjustedTime },  // Event time has passed
+      event_Read: false                // Event is still unread
     });
 
     if (!events || events.length === 0) {
@@ -230,7 +234,7 @@ const markAsRead = async (req, res) => {
 
     const updatedEvent = await companyModel.Event.findOneAndUpdate(
       { _id: eventId },
-      { marked_As_Read: true },
+      { event_Read: true },
       { new: true } 
     );
 
@@ -255,6 +259,8 @@ const markAsRead = async (req, res) => {
   }
 };
 
+
+
 // Export the controller functions
 const event = {
   createEvent,
@@ -263,7 +269,7 @@ const event = {
   updateEvent,
   deleteEvent,
   getEventsByUserId,
-  markAsRead,
+  markAsRead
 };
 
 module.exports=event

@@ -5,9 +5,13 @@ const createLead = async (req, res) => {
   try {
     const companyId = req.user.companyId;
     const userId = req.user.userId;
-    const user = req.user;
-    const { lead_Client, lead_Organization, lead_Title, lead_Source,lead_Scope } =
-      req.body;
+    const {
+      lead_Client,
+      lead_Organization,
+      lead_Title,
+      lead_Source,
+      lead_Scope,
+    } = req.body;
 
     // Create a new lead document
     const savedLead = await companyModel.Lead.create({
@@ -19,6 +23,12 @@ const createLead = async (req, res) => {
       lead_Source,
       lead_Label: "Hot",
       lead_Scope,
+      lead_TransferAndAssign: [
+        {
+          lead_TransferredByUserId: userId,
+          lead_AssignedToUserId: userId,
+        },
+      ],
     });
 
     return res.status(201).json({
@@ -63,29 +73,39 @@ const addOptionalDataToLead = async (req, res) => {
     // Prepare update object
     const update = {};
     if (lead_Demography) {
-      update['lead_Demography'] = { ...lead.lead_Demography, ...lead_Demography };
+      update["lead_Demography"] = {
+        ...lead.lead_Demography,
+        ...lead_Demography,
+      };
     }
     if (lead_Behaviour) {
-      update['lead_Behaviour'] = { ...lead.lead_Behaviour, ...lead_Behaviour };
+      update["lead_Behaviour"] = { ...lead.lead_Behaviour, ...lead_Behaviour };
     }
     if (lead_Action) {
-      update['lead_Action'] = { ...lead.lead_Action, ...lead_Action };
+      update["lead_Action"] = { ...lead.lead_Action, ...lead_Action };
     }
     if (lead_AttributesOrAction) {
-      update['lead_AttributesOrAction'] = { ...lead.lead_AttributesOrAction, ...lead_AttributesOrAction };
+      update["lead_AttributesOrAction"] = {
+        ...lead.lead_AttributesOrAction,
+        ...lead_AttributesOrAction,
+      };
     }
     if (lead_Notes) {
       // Handle array updates for notes
-      update['$push'] = { 'lead_Notes': { $each: lead_Notes } };
+      update["$push"] = { lead_Notes: { $each: lead_Notes } };
     }
     if (lead_Pipeline) {
       // Handle array updates for pipeline
-      update['$push'] = update['$push'] || {};
-      update['$push']['lead_Pipeline'] = { $each: lead_Pipeline };
+      update["$push"] = update["$push"] || {};
+      update["$push"]["lead_Pipeline"] = { $each: lead_Pipeline };
     }
 
     // Perform the update atomically
-    const updatedLead = await companyModel.Lead.findByIdAndUpdate(leadId, update, { new: true });
+    const updatedLead = await companyModel.Lead.findByIdAndUpdate(
+      leadId,
+      update,
+      { new: true }
+    );
     if (!updatedLead) {
       return res.status(500).json({
         success: false,
@@ -115,18 +135,29 @@ const getAllLeads = async (req, res) => {
       deleted: false,
     });
     const leadCreators = allLeads.map((lead) => lead.lead_Creater);
+    const leadTransferredByUserIds = allLeads
+      .map((lead) => lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]?.lead_TransferredByUserId)
+      .filter(Boolean);
+    const leadAssignedToUserIds = allLeads
+      .map((lead) => lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]?.lead_AssignedToUserId)
+      .filter(Boolean);
+
+    // Fetch users for creators, transferred by users, and assigned to users
     const users = await companyModel.User.find({
-      userId: { $in: leadCreators },
+      userId: { $in: [...leadCreators, ...leadTransferredByUserIds, ...leadAssignedToUserIds] },
     });
+
     const userMap = users.reduce((map, user) => {
       map[user.userId] = user.name;
       return map;
     }, {});
 
-    // Map each lead to include the creator's name
-    const leadsWithCreatorName = allLeads.map((lead) => ({
+    // Map each lead to include the creator's name, transferred by, and assigned to user names
+    const leadsWithUserNames = allLeads.map((lead) => ({
       ...lead._doc,
       lead_CreaterName: userMap[lead.lead_Creater] || "Unknown",
+      lead_TransferredByUserName: userMap[lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]?.lead_TransferredByUserId] || "Unknown",
+      lead_AssignedToUserName: userMap[lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]?.lead_AssignedToUserId] || "Unknown",
     }));
 
     return res.status(201).json({
@@ -134,7 +165,7 @@ const getAllLeads = async (req, res) => {
       status: 201,
       message: "All Leads retrieved successfully",
       information: {
-        allLeads: leadsWithCreatorName,
+        allLeads: leadsWithUserNames,
       },
     });
   } catch (error) {
@@ -201,6 +232,7 @@ const approveLeadById = async (req, res) => {
     });
   }
 };
+
 const getLeadById = async (req, res) => {
   try {
     const companyId = req.user.companyId;
@@ -368,59 +400,40 @@ const addPipelineDetail = async (req, res) => {
   }
 };
 
-
 const leadTransfered = async (req, res) => {
   try {
     const { leadId } = req.params;
     const user = req.user;
-    const { receivedById } = req.body; 
-    if (!receivedById) {
-      return res.status(400).json({
-        success: false,
-        message: "Receiver's user ID is required.",
-      });
-    }
+    const { receivedById } = req.body;
 
     const lead = await companyModel.Lead.findById(leadId);
-    if (!lead) {
-      return res.status(404).json({
-        success: false,
-        message: "Lead not found.",
-      });
-    }
 
-    const department = await companyModel.Department.findOne({ companyId: user.companyId });
-    const employee = department.department_Employees.find(
-      (emp) => emp.userId.toString() === user.userId.toString()
+    const salesDepartment = await companyModel.Department.findOne({
+      companyId: user.companyId,
+      department_Name: "Sales",
+    });
+
+    const salesEmployee = salesDepartment.department_Employees.find(
+      (emp) => emp.userId === user.userId
     );
 
-    if (!employee && user.access !== 'Admin') {
+    if (!salesEmployee && user.access !== "Admin") {
       return res.status(404).json({
         success: false,
         message: "User not authorized to transfer the lead.",
       });
     }
 
-    if (user.access === 'Admin' || employee.employee_Designation === 'Team Lead') {
-      // Allow Admins or Team Leads to transfer without restrictions
-      lead.lead_TransferredBy.push({ userId: user.userId, transferredAt: new Date() });
-      lead.lead_Creater = receivedById;
-    } else {
-      // For non-Team Leads, only allow the transfer once
-      const alreadyTransferred = lead.lead_TransferredBy.some(
-        (transfer) => transfer.userId.toString() === user.userId.toString()
-      );
-
-      if (alreadyTransferred) {
-        return res.status(400).json({
-          success: false,
-          message: "You have already transferred this lead.",
-        });
-      }
-
-      // Proceed with the transfer for non-Team Leads
-      lead.lead_TransferredBy.push({ userId: user.userId, transferredAt: new Date() });
-      lead.lead_Creater = receivedById;
+    // Check if user is authorized as Admin or Team Lead
+    if (
+      user.access === "Admin" ||
+      (salesEmployee && salesEmployee.employee_Designation === "Team Lead")
+    ) {
+      lead.lead_TransferAndAssign.push({
+        lead_TransferredByUserId: user.userId,
+        lead_AssignedToUserId: receivedById,
+        transferredAt: new Date(),
+      });
     }
 
     // Save the updated lead document
@@ -435,11 +448,11 @@ const leadTransfered = async (req, res) => {
     console.error("Error transferring lead:", error);
     return res.status(500).json({
       success: false,
-      message: error.message || "An error occurred while transferring the lead.",
+      message:
+        error.message || "An error occurred while transferring the lead.",
     });
   }
 };
-
 
 const lead = {
   createLead,
