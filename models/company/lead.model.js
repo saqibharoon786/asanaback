@@ -1,9 +1,11 @@
 const mongoose = require("mongoose");
+const schedule = require("node-schedule");
 
 // Lead schema
 const leadSchema = new mongoose.Schema(
   {
     companyId: { type: String },
+    leadIdentifier: { type: String },
     lead_TransferAndAssign: [
       {
         lead_TransferredByUserId: {
@@ -21,11 +23,18 @@ const leadSchema = new mongoose.Schema(
     lead_Creater: {
       type: String,
     },
+    lead_ContactPerson: {
+      type: String,
+    },
     lead_Client: {
       client_Name: { type: String },
       client_Email: { type: String },
       client_Address: { type: String },
-      client_Contact: { type: Number },
+    },
+    lead_ClientContactPerson: {
+      client_ClientContactPersonName: { type: String },
+      client_ClientContactPersonEmail: { type: String },
+      client_ClientContactPersonContact: { type: String },
     },
     lead_Organization: {
       type: String,
@@ -42,7 +51,14 @@ const leadSchema = new mongoose.Schema(
     },
     lead_Source: {
       type: String,
-      enum: ["Whatsapp", "Emails", "Calls", "Website Forms", "References"],
+      enum: [
+        "Whatsapp",
+        "Emails",
+        "Calls",
+        "Website Forms",
+        "References",
+        "Social Media",
+      ],
     },
     lead_Scope: {
       type: String,
@@ -134,7 +150,7 @@ const leadSchema = new mongoose.Schema(
         },
       },
     ],
-    lead_Pipeline: [
+    lead_InteractionHistory: [
       {
         stage_Name: { type: String },
         stage_Detail: { type: String },
@@ -151,3 +167,32 @@ const leadSchema = new mongoose.Schema(
 
 const Lead = mongoose.model("Lead", leadSchema);
 module.exports = Lead;
+
+schedule.scheduleJob("0 0 * * *", async () => {
+  try {
+    const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000); // 2 days ago
+    const sixDaysAgo = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000); // 6 days ago
+
+    // Update leads older than 2 days but less than 6 days to "Warm"
+    await Lead.updateMany(
+      {
+        createdAt: { $lte: twoDaysAgo, $gt: sixDaysAgo },
+        lead_Label: { $ne: "Warm" }, // Only update if not already Warm
+      },
+      { $set: { lead_Label: "Warm" } }
+    );
+
+    // Update leads older than 6 days to "Cold"
+    await Lead.updateMany(
+      {
+        createdAt: { $lte: sixDaysAgo },
+        lead_Label: { $ne: "Cold" }, // Only update if not already Cold
+      },
+      { $set: { lead_Label: "Cold" } }
+    );
+
+    console.log("Lead labels updated based on age.");
+  } catch (error) {
+    console.error("Error updating lead labels:", error);
+  }
+});

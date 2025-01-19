@@ -55,18 +55,24 @@ router.post(
 );
 
 router.post(
-  "/add-pipeline/:leadId",
+  "/add-interaction-history/:leadId",
   passport.authenticate("jwt", { session: false }),
   middleware.checkPermission("delete"),
-  controller.lead.addPipelineDetail
+  controller.lead.addInteractionHistoryDetail
 );
 
 router.patch(
   "/transfer-lead/:leadId",
   passport.authenticate("jwt", { session: false }),
   middleware.checkPermission("update"),
-  controller.lead.leadTransfered
+  controller.lead.leadTransferred
 );
 
+router.patch(
+  "/convert-to-quote/:leadId",
+  passport.authenticate("jwt", { session: false }),
+  middleware.checkPermission("update"),
+  controller.lead.leadTransferred
+);
 
 module.exports = router;

@@ -1,5 +1,6 @@
 const express = require("express");
-const companyModel = require("../models/company/companyIndex.model"); // Adjust the import to point to the correct Lead model
+const companyModel = require("../models/company/companyIndex.model");
+const utils = require("../utils/utilsIndex");
 
 const createLead = async (req, res) => {
   try {
@@ -8,16 +9,21 @@ const createLead = async (req, res) => {
     const {
       lead_Client,
       lead_Organization,
+      lead_ClientContactPerson,
       lead_Title,
       lead_Source,
       lead_Scope,
     } = req.body;
 
+    const leadIdentifier = await utils.generateUniqueLeadId();
+
     // Create a new lead document
     const savedLead = await companyModel.Lead.create({
       companyId,
+      leadIdentifier,
       lead_Creater: userId,
       lead_Client,
+      lead_ClientContactPerson,
       lead_Organization,
       lead_Title,
       lead_Source,
@@ -58,7 +64,7 @@ const addOptionalDataToLead = async (req, res) => {
       lead_Action,
       lead_AttributesOrAction,
       lead_Notes,
-      lead_Pipeline,
+      lead_InteractionHistory,
     } = req.body;
 
     // Fetch the lead by ID to check existence before updating
@@ -94,10 +100,12 @@ const addOptionalDataToLead = async (req, res) => {
       // Handle array updates for notes
       update["$push"] = { lead_Notes: { $each: lead_Notes } };
     }
-    if (lead_Pipeline) {
-      // Handle array updates for pipeline
+    if (lead_InteractionHistory) {
+      // Handle array updates for Interaction History
       update["$push"] = update["$push"] || {};
-      update["$push"]["lead_Pipeline"] = { $each: lead_Pipeline };
+      update["$push"]["lead_InteractionHistory"] = {
+        $each: lead_InteractionHistory,
+      };
     }
 
     // Perform the update atomically
@@ -134,17 +142,42 @@ const getAllLeads = async (req, res) => {
       companyId: companyId,
       deleted: false,
     });
+
     const leadCreators = allLeads.map((lead) => lead.lead_Creater);
     const leadTransferredByUserIds = allLeads
-      .map((lead) => lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]?.lead_TransferredByUserId)
+      .map(
+        (lead) =>
+          lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
+            ?.lead_TransferredByUserId
+      )
       .filter(Boolean);
+
     const leadAssignedToUserIds = allLeads
-      .map((lead) => lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]?.lead_AssignedToUserId)
+      .map(
+        (lead) =>
+          lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
+            ?.lead_AssignedToUserId
+      )
+      .filter(Boolean);
+
+    const leadPreviousUserIds = allLeads
+      .map(
+        (lead) =>
+          lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 2]
+            ?.lead_AssignedToUserId
+      )
       .filter(Boolean);
 
     // Fetch users for creators, transferred by users, and assigned to users
     const users = await companyModel.User.find({
-      userId: { $in: [...leadCreators, ...leadTransferredByUserIds, ...leadAssignedToUserIds] },
+      userId: {
+        $in: [
+          ...leadCreators,
+          ...leadTransferredByUserIds,
+          ...leadAssignedToUserIds,
+          ...leadPreviousUserIds,
+        ],
+      },
     });
 
     const userMap = users.reduce((map, user) => {
@@ -156,8 +189,21 @@ const getAllLeads = async (req, res) => {
     const leadsWithUserNames = allLeads.map((lead) => ({
       ...lead._doc,
       lead_CreaterName: userMap[lead.lead_Creater] || "Unknown",
-      lead_TransferredByUserName: userMap[lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]?.lead_TransferredByUserId] || "Unknown",
-      lead_AssignedToUserName: userMap[lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]?.lead_AssignedToUserId] || "Unknown",
+      lead_TransferredByUserName:
+        userMap[
+          lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
+            ?.lead_TransferredByUserId
+        ] || "Unknown",
+      lead_PreviousOwnerName:
+        userMap[
+          lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 2]
+            ?.lead_AssignedToUserId
+        ] || "No Previous Owner",
+      lead_AssignedToUserName:
+        userMap[
+          lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
+            ?.lead_AssignedToUserId
+        ] || "Unknown",
     }));
 
     return res.status(201).json({
@@ -253,11 +299,48 @@ const getLeadById = async (req, res) => {
       });
     }
 
+    // Extract lead_TransferAndAssign
+    const leadTransferAndAssign = lead.lead_TransferAndAssign || [];
+
+    // Fetch user details based on IDs in lead_TransferAndAssign
+    const userIds = [
+      ...new Set(
+        leadTransferAndAssign.flatMap((transfer) => [
+          transfer.lead_TransferredByUserId,
+          transfer.lead_AssignedToUserId,
+        ])
+      ),
+    ];
+
+    // Simulating user model lookup (Replace with actual DB query to get users)
+    const users = await companyModel.User.find(
+      { userId: { $in: userIds } },
+      "userId name"
+    );
+
+    const userMap = users.reduce((map, user) => {
+      map[user.userId] = user.name;
+      return map;
+    }, {});
+
+    // Map transfer history with user names
+    const leadTransferHistoryUsersNames = leadTransferAndAssign.map(
+      (transfer) => ({
+        transferredBy: userMap[transfer.lead_TransferredByUserId] || "Unknown",
+        assignedTo: userMap[transfer.lead_AssignedToUserId] || "Unknown",
+        transferredAt: transfer.transferredAt,
+      })
+    );
+
+    // Return the lead with additional transfer history users
     return res.status(200).json({
       success: true,
       status: 200,
       message: "Lead retrieved successfully.",
-      information: { lead },
+      information: {
+        lead,
+        leadTransferHistoryUsersNames,
+      },
     });
   } catch (error) {
     console.error("Error fetching lead by ID:", error);
@@ -348,10 +431,10 @@ const addNote = async (req, res) => {
   }
 };
 
-const addPipelineDetail = async (req, res) => {
+const addInteractionHistoryDetail = async (req, res) => {
   try {
     const { leadId } = req.params; // Get the lead ID from the request parameters
-    const { stage_Name, stage_Detail } = req.body; // Extract pipeline details from the request body
+    const { stage_Name, stage_Detail } = req.body; // Extract interaction history details from the request body
 
     // Validate the input
     if (!stage_Name || !stage_Detail) {
@@ -361,12 +444,12 @@ const addPipelineDetail = async (req, res) => {
       });
     }
 
-    // Update the lead document by pushing a new stage into lead_Pipeline
+    // Update the lead document by pushing a new stage into lead_InteractionHistory
     const updatedLead = await companyModel.Lead.findByIdAndUpdate(
       leadId, // Use the leadId directly
       {
         $push: {
-          lead_Pipeline: {
+          lead_InteractionHistory: {
             stage_Name,
             stage_Detail,
             stage_CreatedAt: new Date(), // Optional, override default if needed
@@ -387,20 +470,21 @@ const addPipelineDetail = async (req, res) => {
     // Respond with the updated lead
     return res.status(200).json({
       success: true,
-      message: "Pipeline detail added successfully.",
+      message: "Interaction History detail added successfully.",
       data: updatedLead,
     });
   } catch (error) {
-    console.error("Error adding pipeline detail:", error);
+    console.error("Error adding Interaction History detail:", error);
     return res.status(500).json({
       success: false,
       message:
-        error.message || "An error occurred while adding the pipeline detail.",
+        error.message ||
+        "An error occurred while adding the interaction history detail.",
     });
   }
 };
 
-const leadTransfered = async (req, res) => {
+const leadTransferred = async (req, res) => {
   try {
     const { leadId } = req.params;
     const user = req.user;
@@ -454,6 +538,44 @@ const leadTransfered = async (req, res) => {
   }
 };
 
+const leadConvertToQuote = async (req, res) => {
+  try {
+    const { leadId } = req.params;
+    const user = req.user;
+
+    const lead = await companyModel.Lead.find(leadId);
+    // await lead.lead_Status = "Close-Won";
+
+    // Check if user is authorized as Admin or Team Lead
+    if (
+      user.access === "Admin" ||
+      (salesEmployee && salesEmployee.employee_Designation === "Team Lead")
+    ) {
+      lead.lead_TransferAndAssign.push({
+        lead_TransferredByUserId: user.userId,
+        lead_AssignedToUserId: receivedById,
+        transferredAt: new Date(),
+      });
+    }
+
+    // Save the updated lead document
+    await lead.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Lead successfully transferred.",
+      lead,
+    });
+  } catch (error) {
+    console.error("Error transferring lead:", error);
+    return res.status(500).json({
+      success: false,
+      message:
+        error.message || "An error occurred while transferring the lead.",
+    });
+  }
+};
+
 const lead = {
   createLead,
   getAllLeads,
@@ -462,8 +584,8 @@ const lead = {
   approveLeadById,
   addOptionalDataToLead,
   addNote,
-  addPipelineDetail,
-  leadTransfered,
+  addInteractionHistoryDetail,
+  leadTransferred,
 };
 
 module.exports = lead;
