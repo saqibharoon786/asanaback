@@ -40,13 +40,6 @@ router.patch(
   controller.lead.approveLeadById
 );
 
-router.delete(
-  "/delete/:leadId",
-  passport.authenticate("jwt", { session: false }),
-  middleware.checkPermission("delete"),
-  controller.lead.deleteLead
-);
-
 router.post(
   "/add-note/:leadId",
   passport.authenticate("jwt", { session: false }),
@@ -68,11 +61,33 @@ router.patch(
   controller.lead.leadTransferred
 );
 
+
+router.post(
+  "/mass-transfer",
+  passport.authenticate("jwt", { session: false }),
+  middleware.checkPermission("update"),
+  controller.lead.massTransferLeads
+);
+
 router.patch(
   "/convert-to-quote/:leadId",
   passport.authenticate("jwt", { session: false }),
   middleware.checkPermission("update"),
   controller.lead.leadTransferred
+);
+
+router.delete(
+  "/delete/:leadId",
+  passport.authenticate("jwt", { session: false }),
+  middleware.checkPermission("delete"),
+  controller.lead.deleteLead
+);
+
+router.post(
+  "/mass-delete",
+  passport.authenticate("jwt", { session: false }),
+  middleware.checkPermission("delete"),
+  controller.lead.massDeleteLeads
 );
 
 module.exports = router;

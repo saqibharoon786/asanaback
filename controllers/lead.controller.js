@@ -352,48 +352,6 @@ const getLeadById = async (req, res) => {
   }
 };
 
-const deleteLead = async (req, res) => {
-  try {
-    const companyId = req.user.companyId;
-    const { leadId } = req.params;
-    if (!leadId) {
-      return res.status(400).json({
-        success: false,
-        message: "Please provide the lead ID.",
-      });
-    }
-
-    // Find the lead by ID and mark it as deleted
-    const lead = await companyModel.Lead.findById({
-      companyId,
-      _id: leadId,
-    });
-    if (!lead) {
-      return res.status(404).json({
-        success: false,
-        message: "Lead not found.",
-      });
-    }
-
-    // Mark the lead as deleted by updating the 'deleted' field to true
-    await companyModel.Lead.updateOne(
-      { _id: leadId },
-      { $set: { deleted: true } }
-    );
-
-    return res.status(200).json({
-      success: true,
-      message: "Lead deleted successfully.",
-    });
-  } catch (error) {
-    console.error("Error deleting lead:", error);
-    return res.status(500).json({
-      success: false,
-      message: error.message || "An error occurred while deleting the lead.",
-    });
-  }
-};
-
 const addNote = async (req, res) => {
   try {
     const { leadId } = req.params;
@@ -538,40 +496,107 @@ const leadTransferred = async (req, res) => {
   }
 };
 
-const leadConvertToQuote = async (req, res) => {
+const massTransferLeads = async (req, res) => {
   try {
-    const { leadId } = req.params;
+    const { receivedById, leadIds } = req.body;
     const user = req.user;
 
-    const lead = await companyModel.Lead.find(leadId);
-    // await lead.lead_Status = "Close-Won";
-
-    // Check if user is authorized as Admin or Team Lead
-    if (
-      user.access === "Admin" ||
-      (salesEmployee && salesEmployee.employee_Designation === "Team Lead")
-    ) {
-      lead.lead_TransferAndAssign.push({
-        lead_TransferredByUserId: user.userId,
-        lead_AssignedToUserId: receivedById,
-        transferredAt: new Date(),
+    if (!Array.isArray(leadIds) || leadIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or missing leadIds array.",
       });
     }
 
-    // Save the updated lead document
-    await lead.save();
+    // Update each lead with the transfer details
+    await companyModel.Lead.updateMany(
+      { _id: { $in: leadIds } },
+      {
+        $push: {
+          lead_TransferAndAssign: {
+            lead_TransferredByUserId: user.userId,
+            lead_AssignedToUserId: receivedById,
+            transferredAt: new Date(),
+          },
+        },
+      }
+    );
 
     return res.status(200).json({
       success: true,
-      message: "Lead successfully transferred.",
-      lead,
+      message: "Leads successfully transferred.",
     });
   } catch (error) {
-    console.error("Error transferring lead:", error);
+    console.error("Error transferring leads:", error);
     return res.status(500).json({
       success: false,
       message:
-        error.message || "An error occurred while transferring the lead.",
+        error.message || "An error occurred while transferring the leads.",
+    });
+  }
+};
+
+const deleteLead = async (req, res) => {
+  try {
+    const companyId = req.user.companyId;
+    const { leadId } = req.params;
+    if (!leadId) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide the lead ID.",
+      });
+    }
+
+    // Find the lead by ID and mark it as deleted
+    const lead = await companyModel.Lead.findById({
+      companyId,
+      _id: leadId,
+    });
+    if (!lead) {
+      return res.status(404).json({
+        success: false,
+        message: "Lead not found.",
+      });
+    }
+
+    // Mark the lead as deleted by updating the 'deleted' field to true
+    await companyModel.Lead.updateOne(
+      { _id: leadId },
+      { $set: { deleted: true } }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Lead deleted successfully.",
+    });
+  } catch (error) {
+    console.error("Error deleting lead:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "An error occurred while deleting the lead.",
+    });
+  }
+};
+
+const massDeleteLeads = async (req, res) => {
+  try {
+    let { leadIds } = req.body;
+
+    // Update the "deleted" field of the leads
+    await companyModel.Lead.updateMany(
+      { _id: { $in: leadIds } },
+      { $set: { deleted: true } }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Leads deleted successfully.",
+    });
+  } catch (error) {
+    console.error("Error deleting leads:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "An error occurred while deleting the leads.",
     });
   }
 };
@@ -580,12 +605,14 @@ const lead = {
   createLead,
   getAllLeads,
   getLeadById,
-  deleteLead,
   approveLeadById,
   addOptionalDataToLead,
   addNote,
   addInteractionHistoryDetail,
   leadTransferred,
+  massTransferLeads,
+  deleteLead,
+  massDeleteLeads,
 };
 
 module.exports = lead;
