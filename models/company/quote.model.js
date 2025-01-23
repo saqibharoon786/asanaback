@@ -8,15 +8,10 @@ const quoteSchema = new mongoose.Schema(
       type: String,
     },
     quote_Creater: {
-      name: { type: String },
-      email: { type: String },
-      contact: { type: String },
+      type: String,
     },
     quote_Client: {
       client_Name: { type: String },
-      client_Email: { type: String },
-      client_Contact: { type: String },
-      client_Address: { type: String },
     },
     quote_Products: [
       {
@@ -76,6 +71,24 @@ const quoteSchema = new mongoose.Schema(
         enum: ["Pending", "Approved", "Rejected"],
         default: "Pending",
       },
+    },
+    quote_Subject: {
+      type: String,
+    },
+    quote_Project: {
+      type: String,
+    },
+    quote_LeadId: {
+      type: String,
+    },
+    quote_SalesPerson: {
+      type: String,
+    },
+    quote_Date: {
+      type: String,
+    },
+    quote_ExpiryDate: {
+      type: String,
     },
     deleted: { type: Boolean, default: false },
   },

@@ -7,39 +7,17 @@ const createQuote = async (req, res) => {
     const user = req.user;
     const {
       quote_Client,
+      quote_SalesPerson,
       quote_Products,
       quote_Details,
       quote_InitialPayment,
       quote_BeforeTaxPrice,
       quote_AfterTaxPrice,
       quote_AfterDiscountPrice,
+      quote_Subject,
+      quote_Project,
+      quote_LeadId,
     } = req.body;
-
-    // Verify product existence and stock
-    for (const item of quote_Products) {
-      const { product, quantity, product_AfterDiscountPrice } = item;
-
-      const dbProduct = await companyModel.Product.findOne({
-        product_Name: product,
-        companyId,
-      });
-
-      if (!dbProduct) {
-        return res.status(404).json({
-          success: false,
-          status: 404,
-          message: `Product '${product}' not found in the database.`,
-        });
-      }
-
-      if (dbProduct.product_StockQuantity < quantity) {
-        return res.status(400).json({
-          success: false,
-          status: 400,
-          message: `Insufficient stock for product '${product}'.`,
-        });
-      }
-    }
 
     // Generate unique quote identifier
     const quoteCount = await companyModel.Quote.countDocuments();
@@ -53,12 +31,11 @@ const createQuote = async (req, res) => {
     // Save quote
     const newQuote = await companyModel.Quote.create({
       companyId,
+      quote_SalesPerson,
       quote_Identifier,
-      quote_Creater: {
-        name: user.name,
-        email: user.email,
-        contact: user.contact,
-      },
+      quote_Subject,
+      quote_Project,
+      quote_Creater: user.userId,
       quote_Client,
       quote_Products, // Pass products directly, including discount fields
       quote_BeforeTaxPrice,
@@ -66,21 +43,8 @@ const createQuote = async (req, res) => {
       quote_AfterDiscountPrice,
       quote_InitialPayment,
       quote_Details: newQuoteDetails,
+      quote_LeadId: quote_LeadId || "",
     });
-
-    // Update stock quantities
-    for (const item of quote_Products) {
-      const product = await companyModel.Product.findOne({
-        companyId,
-        product_Name: item.product,
-        deleted: false,
-      });
-
-      if (product) {
-        product.product_StockQuantity -= item.quantity;
-        await product.save();
-      }
-    }
 
     return res.status(200).json({
       success: true,
@@ -173,7 +137,6 @@ const getQuoteById = async (req, res) => {
     });
   }
 };
-
 
 const approveQuoteById = async (req, res) => {
   try {
@@ -300,9 +263,6 @@ const deleteQuote = async (req, res) => {
     });
   }
 };
-
-
-
 
 const quote = {
   createQuote,
