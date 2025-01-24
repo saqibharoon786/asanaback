@@ -7,7 +7,8 @@ const employeeFolder = path.join(__dirname, "../uploads/employee");
 const productFolder = path.join(__dirname, "../uploads/product");
 const companyFolder = path.join(__dirname, "../uploads/company");
 const adminFolder = path.join(__dirname, "../uploads/admin");
-const filesFolder = path.join(__dirname, "../uploads/files"); 
+const filesFolder = path.join(__dirname, "../uploads/files");
+const quotesFolder = path.join(__dirname, "../uploads/quotes"); 
 
 const randomNumber = Math.floor(Math.random() * 10000);
 
@@ -23,6 +24,7 @@ ensureFolderExists(productFolder);
 ensureFolderExists(companyFolder);
 ensureFolderExists(adminFolder);
 ensureFolderExists(filesFolder);
+ensureFolderExists(quotesFolder);
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -35,6 +37,8 @@ const storage = multer.diskStorage({
       cb(null, companyFolder);
     } else if (file.fieldname === "admin_Image") {
       cb(null, adminFolder);
+    } else if (file.fieldname === "quote_Image") {
+      cb(null, quotesFolder);
     } else if (
       file.mimetype === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" || // Excel
       file.mimetype === "application/vnd.ms-excel" || // Excel

@@ -10,6 +10,9 @@ const quoteSchema = new mongoose.Schema(
     quote_Creater: {
       type: String,
     },
+    quote_SalesPerson: {
+      type: String,
+    },
     quote_Client: {
       client_Name: { type: String },
     },
@@ -17,6 +20,9 @@ const quoteSchema = new mongoose.Schema(
       {
         product: {
           type: String,
+        },
+        product_SellingPrice: {
+          type: Number,
         },
         quantity: {
           type: Number,
@@ -34,10 +40,6 @@ const quoteSchema = new mongoose.Schema(
           type: Number,
           default: 0,
         },
-        product_Tax: {
-          type: Number,
-          default: 0,
-        },
         product_DiscountPercentage: {
           type: Number,
           default: 0,
@@ -52,13 +54,14 @@ const quoteSchema = new mongoose.Schema(
         },
       },
     ],
+    quote_Image: { filePath: { type: String } },
     quote_InitialPayment: {
       type: Number,
     },
     quote_BeforeTaxPrice: {
       type: Number,
     },
-    quote_AfterTaxPrice: {
+    quote_TotalTax  : {
       type: Number,
     },
     quote_AfterDiscountPrice: {
@@ -88,6 +91,9 @@ const quoteSchema = new mongoose.Schema(
       type: String,
     },
     quote_ExpiryDate: {
+      type: String,
+    },
+    quote_ReferenceNumber: {
       type: String,
     },
     deleted: { type: Boolean, default: false },

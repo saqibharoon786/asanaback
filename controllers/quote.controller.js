@@ -7,18 +7,21 @@ const createQuote = async (req, res) => {
     const user = req.user;
     const {
       quote_Client,
-      quote_SalesPerson,
+      quote_SalesPerson,    
       quote_Products,
       quote_Details,
       quote_InitialPayment,
       quote_BeforeTaxPrice,
-      quote_AfterTaxPrice,
+      quote_TotalTax,
       quote_AfterDiscountPrice,
       quote_Subject,
       quote_Project,
       quote_LeadId,
+      quote_Date,
+      quote_ExpiryDate,
     } = req.body;
 
+    console.log("here");
     // Generate unique quote identifier
     const quoteCount = await companyModel.Quote.countDocuments();
     const quote_Identifier = `${user.userId}-${quoteCount + 1}`;
@@ -28,9 +31,11 @@ const createQuote = async (req, res) => {
       status: quote_Details?.status || "Pending",
     };
 
+    const quote_ImagePath = `/uploads/quotes/${req.file.filename}`;
+
     // Save quote
     const newQuote = await companyModel.Quote.create({
-      companyId,
+      companyId,  
       quote_SalesPerson,
       quote_Identifier,
       quote_Subject,
@@ -39,11 +44,14 @@ const createQuote = async (req, res) => {
       quote_Client,
       quote_Products, // Pass products directly, including discount fields
       quote_BeforeTaxPrice,
-      quote_AfterTaxPrice,
+      quote_TotalTax,
+      quote_Image: { filePath: quote_ImagePath },
       quote_AfterDiscountPrice,
       quote_InitialPayment,
       quote_Details: newQuoteDetails,
       quote_LeadId: quote_LeadId || "",
+      quote_Date,
+      quote_ExpiryDate,
     });
 
     return res.status(200).json({
@@ -269,8 +277,7 @@ const quote = {
   getAllQuotes,
   getQuoteById,
   approveQuoteById,
-  deleteQuote,
-  
+  deleteQuote,  
 };
 
 module.exports = quote;

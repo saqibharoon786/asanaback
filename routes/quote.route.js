@@ -10,6 +10,7 @@ router.post(
   "/create-quote",
   passport.authenticate("jwt", { session: false }),
   middleware.checkPermission("create"),
+  upload.single("quote_Image"),
   controller.quote.createQuote
 );
 
