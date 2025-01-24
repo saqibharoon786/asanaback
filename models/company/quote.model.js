@@ -14,7 +14,7 @@ const quoteSchema = new mongoose.Schema(
       type: String,
     },
     quote_Client: {
-      client_Name: { type: String },
+      type: String,
     },
     quote_Products: [
       {
@@ -61,7 +61,7 @@ const quoteSchema = new mongoose.Schema(
     quote_BeforeTaxPrice: {
       type: Number,
     },
-    quote_TotalTax  : {
+    quote_TotalTax: {
       type: Number,
     },
     quote_AfterDiscountPrice: {

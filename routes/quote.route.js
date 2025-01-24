@@ -14,6 +14,14 @@ router.post(
   controller.quote.createQuote
 );
 
+router.patch(
+  "/edit-quote/:quoteId",
+  passport.authenticate("jwt", { session: false }),
+  middleware.checkPermission("create"),
+  upload.single("quote_Image"),
+  controller.quote.EditQuote
+);
+
 router.get(
   "/get-quotes",
   passport.authenticate("jwt", { session: false }),

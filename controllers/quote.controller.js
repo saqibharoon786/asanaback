@@ -3,11 +3,12 @@ const companyModel = require("../models/company/companyIndex.model");
 
 const createQuote = async (req, res) => {
   const companyId = req.user.companyId;
+
   try {
     const user = req.user;
     const {
       quote_Client,
-      quote_SalesPerson,    
+      quote_SalesPerson,
       quote_Products,
       quote_Details,
       quote_InitialPayment,
@@ -19,9 +20,11 @@ const createQuote = async (req, res) => {
       quote_LeadId,
       quote_Date,
       quote_ExpiryDate,
+      quote_ReferenceNumber,
     } = req.body;
 
-    console.log("here");
+    const parsedQuoteProducts = JSON.parse(quote_Products);
+
     // Generate unique quote identifier
     const quoteCount = await companyModel.Quote.countDocuments();
     const quote_Identifier = `${user.userId}-${quoteCount + 1}`;
@@ -31,27 +34,33 @@ const createQuote = async (req, res) => {
       status: quote_Details?.status || "Pending",
     };
 
-    const quote_ImagePath = `/uploads/quotes/${req.file.filename}`;
+    var quote_ImagePath = "";
+    if (req.file) {
+      quote_ImagePath = `/uploads/quotes/${req.file.filename}`;
+    }
 
     // Save quote
     const newQuote = await companyModel.Quote.create({
-      companyId,  
+      companyId,
+      quote_Client,
       quote_SalesPerson,
       quote_Identifier,
       quote_Subject,
       quote_Project,
       quote_Creater: user.userId,
-      quote_Client,
-      quote_Products, // Pass products directly, including discount fields
+      quote_Products: parsedQuoteProducts, // Pass products directly, including discount fields
       quote_BeforeTaxPrice,
       quote_TotalTax,
-      quote_Image: { filePath: quote_ImagePath },
+      quote_ReferenceNumber,
       quote_AfterDiscountPrice,
       quote_InitialPayment,
       quote_Details: newQuoteDetails,
       quote_LeadId: quote_LeadId || "",
       quote_Date,
       quote_ExpiryDate,
+      quote_Image: {
+        filePath: quote_ImagePath,
+      },
     });
 
     return res.status(200).json({
@@ -72,10 +81,98 @@ const createQuote = async (req, res) => {
   }
 };
 
+const EditQuote = async (req, res) => {
+  const companyId = req.user.companyId;
+  try {
+    const user = req.user;
+    const { quoteId } = req.params; // Quote ID from request parameters
+    const {
+      quote_Client,
+      quote_SalesPerson,
+      quote_Products,
+      quote_Details,
+      quote_InitialPayment,
+      quote_BeforeTaxPrice,
+      quote_TotalTax,
+      quote_AfterDiscountPrice,
+      quote_Subject,
+      quote_Project,
+      quote_LeadId,
+      quote_Date,
+      quote_ExpiryDate,
+      quote_ReferenceNumber,
+    } = req.body;
+
+    // Parse the quote products if they are passed as a JSON string
+    const parsedQuoteProducts = JSON.parse(quote_Products || "[]");
+
+    // Handle uploaded image if a new image is provided
+    let quote_ImagePath = "";
+    if (req.file) {
+      quote_ImagePath = `/uploads/quotes/${req.file.filename}`;
+    }
+
+    // Find the existing quote
+    const existingQuote = await companyModel.Quote.findById(quoteId);
+    if (!existingQuote) {
+      return res.status(404).json({
+        success: false,
+        status: 404,
+        message: "Quote not found",
+      });
+    }
+
+    // Update quote details
+    const updatedQuote = await companyModel.Quote.findByIdAndUpdate(
+      quoteId,
+      {
+        $set: {
+          companyId,
+          quote_Client: quote_Client || existingQuote.quote_Client,
+          quote_SalesPerson: quote_SalesPerson || existingQuote.quote_SalesPerson,
+          quote_Products: parsedQuoteProducts.length > 0 ? parsedQuoteProducts : existingQuote.quote_Products,
+          quote_BeforeTaxPrice: quote_BeforeTaxPrice || existingQuote.quote_BeforeTaxPrice,
+          quote_TotalTax: quote_TotalTax || existingQuote.quote_TotalTax,
+          quote_AfterDiscountPrice: quote_AfterDiscountPrice || existingQuote.quote_AfterDiscountPrice,
+          quote_InitialPayment: quote_InitialPayment || existingQuote.quote_InitialPayment,
+          quote_Subject: quote_Subject || existingQuote.quote_Subject,
+          quote_Project: quote_Project || existingQuote.quote_Project,
+          quote_LeadId: quote_LeadId || existingQuote.quote_LeadId,
+          quote_Date: quote_Date || existingQuote.quote_Date,
+          quote_ExpiryDate: quote_ExpiryDate || existingQuote.quote_ExpiryDate,
+          quote_ReferenceNumber: quote_ReferenceNumber || existingQuote.quote_ReferenceNumber,
+          quote_Details: {
+            ...existingQuote.quote_Details,
+            status: quote_Details?.status || existingQuote.quote_Details?.status,
+          },
+          ...(quote_ImagePath && { quote_Image: { filePath: quote_ImagePath } }), // Only update image if a new one is uploaded
+        },
+      },
+      { new: true } // Return the updated document
+    );
+
+    return res.status(200).json({
+      success: true,
+      status: 200,
+      message: "Quote updated successfully",
+      information: {
+        updatedQuote,
+      },
+    });
+  } catch (error) {
+    console.error("Error updating quote:", error);
+    return res.status(500).json({
+      success: false,
+      status: 500,
+      message: error.message,
+    });
+  }
+};``
+
 const getAllQuotes = async (req, res) => {
   try {
     const companyId = req.user.companyId;
-    var Quotes = await companyModel.Quote.find({companyId ,deleted: false });
+    var Quotes = await companyModel.Quote.find({ companyId, deleted: false });
 
     if (!Quotes || Quotes.length === 0) {
       return res.status(200).json({
@@ -112,8 +209,7 @@ const getQuoteById = async (req, res) => {
     var { quoteId } = req.params;
 
     // Fetch the quote by ID using findById
-    var quote = await companyModel.Quote.findById({companyId,
-      _id : quoteId});
+    var quote = await companyModel.Quote.findById({ companyId, _id: quoteId });
 
     // If no quote is found, return a message with an empty array
     if (!quote) {
@@ -153,8 +249,10 @@ const approveQuoteById = async (req, res) => {
     const { quoteId } = req.params;
 
     // Fetch the quote by ID using findById
-    const quote = await companyModel.Quote.findById({companyId,
-      _id: quoteId});
+    const quote = await companyModel.Quote.findById({
+      companyId,
+      _id: quoteId,
+    });
 
     // If no quote is found, return a message with an empty array
     if (!quote) {
@@ -176,7 +274,7 @@ const approveQuoteById = async (req, res) => {
 
     quote.quote_Details.status = "Approved";
     const updatedQuote = await quote.save();
-    
+
     // Check if the quote save was successful
     if (!updatedQuote) {
       return res.status(500).json({
@@ -198,11 +296,14 @@ const approveQuoteById = async (req, res) => {
         dateCreated: Date.now(),
       },
     });
-    
+
     // Correcting the loop to update product stock quantities
     for (const item of newInvoice.invoice_Products) {
-      const product = await companyModel.Product.findOne({ product_Name: item.product, deleted: false });
-    
+      const product = await companyModel.Product.findOne({
+        product_Name: item.product,
+        deleted: false,
+      });
+
       if (product) {
         product.product_StockQuantity -= item.quantity; // Decrease stock quantity
         await product.save(); // Save the updated product
@@ -234,22 +335,24 @@ const approveQuoteById = async (req, res) => {
 const deleteQuote = async (req, res) => {
   try {
     const companyId = req.user.companyId;
-    const { quoteId } =  req.params;
+    const { quoteId } = req.params;
 
     if (!quoteId) {
       return res.status(400).json({
         success: false,
-        message: "Please provide the quote ID."
+        message: "Please provide the quote ID.",
       });
     }
 
     // Find the quote by ID and mark it as deleted
-    const quote = await companyModel.Quote.findById({companyId,
-      _id: quoteId});
+    const quote = await companyModel.Quote.findById({
+      companyId,
+      _id: quoteId,
+    });
     if (!quote) {
       return res.status(404).json({
         success: false,
-        message: "Quote not found."
+        message: "Quote not found.",
       });
     }
 
@@ -261,23 +364,24 @@ const deleteQuote = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Quote deleted successfully."
+      message: "Quote deleted successfully.",
     });
   } catch (error) {
     console.error("Error deleting quote:", error);
     return res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
 
 const quote = {
   createQuote,
+  EditQuote,
   getAllQuotes,
   getQuoteById,
   approveQuoteById,
-  deleteQuote,  
+  deleteQuote,
 };
 
 module.exports = quote;
