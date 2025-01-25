@@ -8,6 +8,7 @@ var quote = require("./quote.controller");
 var lead = require("./lead.controller");
 var invoice = require("./invoice.controller");
 var event = require("./event.controller");
+var customer = require("./customer.controller");
 
 var controller = {
   loggingIn,
@@ -20,6 +21,7 @@ var controller = {
   lead,
   invoice,
   event,
+  customer
 };
 
 module.exports = controller;

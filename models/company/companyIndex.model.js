@@ -8,8 +8,7 @@ const Invoice = require("./invoice.model");
 const Package = require("./package.model")
 const Company = require("./company.model")
 const Event = require("./event.model")
-
-
+const Customer = require("./customer.model")
 
 const companyModel = {
   User,
@@ -22,7 +21,8 @@ const companyModel = {
   Package,
   Company,
   Event,
-  Project
+  Project,
+  Customer
 };
 
 module.exports = companyModel;

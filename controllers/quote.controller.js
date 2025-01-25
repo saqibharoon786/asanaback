@@ -1,5 +1,6 @@
 const express = require("express");
 const companyModel = require("../models/company/companyIndex.model");
+const utils = require("../utils/utilsIndex");
 
 const createQuote = async (req, res) => {
   const companyId = req.user.companyId;
@@ -26,8 +27,8 @@ const createQuote = async (req, res) => {
     const parsedQuoteProducts = JSON.parse(quote_Products);
 
     // Generate unique quote identifier
-    const quoteCount = await companyModel.Quote.countDocuments();
-    const quote_Identifier = `${user.userId}-${quoteCount + 1}`;
+    const quote_Identifier = await utils.generateUniqueQuoteId();
+
 
     const newQuoteDetails = {
       dateCreated: new Date(),
