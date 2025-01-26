@@ -7,17 +7,8 @@ const createCustomer = async (req, res) => {
   
     try {
       const {
-        customer_Type,
-        customer_PrimaryInfo, // Should match schema
-        customer_CompanyName,
-        customer_DisplayName,
-        customer_Email,
-        customer_Contact,
-        customer_Currency,
-        customer_TaxRate,
-        customer_OpeningBalance,
-        customer_PaymentTerms,
-        customer_EnablePortal,
+        customer_GeneralDetails,
+        customer_OtherDetails,
         customer_Address,
         customer_ContactPersons,
         customer_Remarks,
@@ -28,28 +19,15 @@ const createCustomer = async (req, res) => {
         customer_ImagePath = `/uploads/customers/${req.file.filename}`;
       }
       
+      console.log(customer_GeneralDetails);
       // Save customer
       const newCustomer = await companyModel.Customer.create({
         companyId,
-        customer_Type,
-        customer_PrimaryInfo, // Match schema structure
-        customer_CompanyName,
-        customer_DisplayName,
-        customer_Email,
-        customer_Contact,
-        customer_Currency,
-        customer_TaxRate,
-        customer_OpeningBalance,
-        customer_PaymentTerms, // Match schema structure
-        customer_EnablePortal,
+        customer_GeneralDetails,
+        customer_OtherDetails,
         customer_Address,
         customer_ContactPersons, // Ensure proper structure and validation before saving
         customer_Remarks,
-        customer_Documents: [
-          {
-            filePath: customer_ImagePath,
-          },
-        ],
         customer_CreatedBy: {
           userId, // Match schema structure
         },
