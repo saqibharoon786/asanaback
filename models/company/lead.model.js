@@ -26,17 +26,7 @@ const leadSchema = new mongoose.Schema(
     lead_ContactPerson: {
       type: String,
     },
-    lead_Client: {
-      client_Name: { type: String },
-      client_Email: { type: String },
-      client_Address: { type: String },
-    },
-    lead_ClientContactPerson: {
-      client_ClientContactPersonName: { type: String },
-      client_ClientContactPersonEmail: { type: String },
-      client_ClientContactPersonContact: { type: String },
-    },
-    lead_Organization: {
+    lead_Customer: {
       type: String,
     },
     lead_Title: {

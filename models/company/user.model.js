@@ -22,6 +22,7 @@ const userSchema = new mongoose.Schema(
       department: { type: [String], default: [] },
       company: { type: [String], default: [] },
       event: { type: [String], default: [] },
+      customer: { type: [String], default: [] },
     },
     deleted: { type: Boolean, default: false },
   },

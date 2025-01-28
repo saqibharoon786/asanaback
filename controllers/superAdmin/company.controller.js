@@ -114,6 +114,7 @@ const addAdminToCompany = async (req, res) => {
       product: ["create", "read", "update", "delete"],
       department: ["create", "read", "update", "delete"],
       event: ["create", "read", "update", "delete"],
+      customer: ["create", "read", "update", "delete"],
     };
 
     // Check if the employee image is present in req.file
@@ -162,11 +163,11 @@ const addAdminToCompany = async (req, res) => {
     return res.status(201).json({
       success: true,
       status: 201,
-      message: "Employee added successfully",
+      message: "Admin added successfully",
       information: { newUser },
     });
   } catch (error) {
-    console.error("Error adding employee:", error);
+    console.error("Error adding admin:", error);
     return res.status(500).json({
       success: false,
       status: 500,

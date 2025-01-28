@@ -138,6 +138,7 @@ const addEmployeeToDepartment = async (req, res) => {
       defaultPermissions.quote = ["create", "read", "update", "delete"];
       defaultPermissions.event = ["create", "read", "update", "delete"];
       defaultPermissions.product = ["create", "read", "update", "delete"];
+      defaultPermissions.customer = ["create", "read", "update", "delete"];
     } else if (department_Name === "HR") {
       defaultPermissions.department = ["create", "read", "update", "delete"];
       defaultPermissions.event = ["create", "read", "update", "delete"];
@@ -184,7 +185,7 @@ const addEmployeeToDepartment = async (req, res) => {
 const getAllEmployees = async (req, res) => {
   try {
     const companyId = req.user.companyId;
-    const users = await companyModel.User.find({companyId:companyId});
+    const users = await companyModel.User.find({ companyId: companyId });
 
     if (!users || users.length === 0) {
       return res.status(200).json({
@@ -192,8 +193,8 @@ const getAllEmployees = async (req, res) => {
         status: 404,
         message: "No users found",
         information: {
-          users: []
-        }
+          users: [],
+        },
       });
     }
 
@@ -217,9 +218,9 @@ const getAllEmployees = async (req, res) => {
 const getDepartments = async (req, res) => {
   try {
     const companyId = req.user.companyId;
-    const departments = await companyModel.Department.find({companyId:companyId}).populate(
-      "department_Employees.userId"
-    );
+    const departments = await companyModel.Department.find({
+      companyId: companyId,
+    }).populate("department_Employees.userId");
 
     if (!departments || departments.length === 0) {
       return res.status(200).json({
@@ -227,8 +228,8 @@ const getDepartments = async (req, res) => {
         status: 404,
         message: "No departments found",
         information: {
-          departments: []
-        }
+          departments: [],
+        },
       });
     }
 
@@ -310,12 +311,15 @@ const getEmployeeInformation = async (req, res) => {
     const user = await companyModel.User.findOne({ userId: userId, companyId });
 
     // Find the department where department_Employees contains the given userId
-    const department = await companyModel.Department.findOne({companyId,
-      department_Employees: { $elemMatch: { userId: userId, deleted: false }},
+    const department = await companyModel.Department.findOne({
+      companyId,
+      department_Employees: { $elemMatch: { userId: userId, deleted: false } },
     });
 
     // Find the employee's designation in the department_Employees array
-    const employeeInfo = department?.department_Employees.find(emp => emp.userId === userId && emp.deleted === false);
+    const employeeInfo = department?.department_Employees.find(
+      (emp) => emp.userId === userId && emp.deleted === false
+    );
 
     return res.status(200).json({
       success: true,
@@ -327,7 +331,6 @@ const getEmployeeInformation = async (req, res) => {
         employee_Designation: employeeInfo?.employee_Designation,
       },
     });
-    
   } catch (error) {
     console.error("Error fetching", error);
     return res.status(500).json({
@@ -367,7 +370,9 @@ const updateEmployee = async (req, res) => {
     }
 
     // Construct new image path if a new image is uploaded
-    const newEmployee_ImagePath = req.file ? `/uploads/employee/${req.file.filename}` : user.image?.filePath;
+    const newEmployee_ImagePath = req.file
+      ? `/uploads/employee/${req.file.filename}`
+      : user.image?.filePath;
 
     // Step 3: Update user information in the database
     const updatedUser = await companyModel.User.findOneAndUpdate(
@@ -380,13 +385,14 @@ const updateEmployee = async (req, res) => {
         address: employee_NewAddress || user.address,
         image: { filePath: newEmployee_ImagePath },
         department: employee_NewDepartment || user.department,
-        
       },
       { new: true }
     );
 
     if (!updatedUser) {
-      return res.status(500).json({ success: false, message: "Failed to update the user" });
+      return res
+        .status(500)
+        .json({ success: false, message: "Failed to update the user" });
     }
 
     // Step 4: Handle department updates
@@ -407,14 +413,20 @@ const updateEmployee = async (req, res) => {
       });
     }
 
-    if (previousDepartment && previousDepartment.department_Name !== employee_NewDepartment) {
+    if (
+      previousDepartment &&
+      previousDepartment.department_Name !== employee_NewDepartment
+    ) {
       // Step 5: Soft delete the user in the previous department
-      const previousEmployeeIndex = previousDepartment.department_Employees.findIndex(
-        (emp) => emp.userId === userId
-      );
+      const previousEmployeeIndex =
+        previousDepartment.department_Employees.findIndex(
+          (emp) => emp.userId === userId
+        );
 
       if (previousEmployeeIndex !== -1) {
-        previousDepartment.department_Employees[previousEmployeeIndex].deleted = true;
+        previousDepartment.department_Employees[
+          previousEmployeeIndex
+        ].deleted = true;
         await previousDepartment.save();
       }
 
@@ -501,19 +513,15 @@ const getSalesEmployees = async (req, res) => {
   }
 };
 
-
-
-
 const department = {
   // addDepartment,
   addEmployeeToDepartment,
   getAllEmployees,
   getDepartments,
   getEmployeeInformation,
-  updateEmployee, 
+  updateEmployee,
   deleteEmployee,
-  getSalesEmployees
-  
+  getSalesEmployees,
 };
 
 module.exports = department;

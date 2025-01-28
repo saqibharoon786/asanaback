@@ -6,14 +6,7 @@ const createLead = async (req, res) => {
   try {
     const companyId = req.user.companyId;
     const userId = req.user.userId;
-    const {
-      lead_Client,
-      lead_Organization,
-      lead_ClientContactPerson,
-      lead_Title,
-      lead_Source,
-      lead_Scope,
-    } = req.body;
+    const { lead_Customer, lead_Title, lead_Source, lead_Scope } = req.body;
 
     const leadIdentifier = await utils.generateUniqueLeadId();
 
@@ -22,9 +15,7 @@ const createLead = async (req, res) => {
       companyId,
       leadIdentifier,
       lead_Creater: userId,
-      lead_Client,
-      lead_ClientContactPerson,
-      lead_Organization,
+      lead_Customer,
       lead_Title,
       lead_Source,
       lead_Label: "Hot",
@@ -138,11 +129,30 @@ const addOptionalDataToLead = async (req, res) => {
 const getAllLeads = async (req, res) => {
   try {
     const companyId = req.user.companyId;
+
+    // Fetch all leads for the company
     const allLeads = await companyModel.Lead.find({
       companyId: companyId,
       deleted: false,
     });
 
+    // Extract unique customer IDs from the leads
+    const customerIds = allLeads
+      .map((lead) => lead.lead_Customer)
+      .filter(Boolean);
+
+    // Fetch customer details for the extracted customer IDs
+    const customers = await companyModel.Customer.find({
+      _id: { $in: customerIds },
+    });
+
+    // Create a map of customer details for easy lookup
+    const customerMap = customers.reduce((map, customer) => {
+      map[customer._id] = customer;
+      return map;
+    }, {});
+
+    // Extract user IDs for creators, transferred by users, and assigned to users
     const leadCreators = allLeads.map((lead) => lead.lead_Creater);
     const leadTransferredByUserIds = allLeads
       .map(
@@ -180,13 +190,14 @@ const getAllLeads = async (req, res) => {
       },
     });
 
+    // Create a map of user names for easy lookup
     const userMap = users.reduce((map, user) => {
       map[user.userId] = user.name;
       return map;
     }, {});
 
-    // Map each lead to include the creator's name, transferred by, and assigned to user names
-    const leadsWithUserNames = allLeads.map((lead) => ({
+    // Map each lead to include the creator's name, transferred by, assigned to user names, and customer details
+    const leadsWithUserNamesAndCustomerDetails = allLeads.map((lead) => ({
       ...lead._doc,
       lead_CreaterName: userMap[lead.lead_Creater] || "Unknown",
       lead_TransferredByUserName:
@@ -204,6 +215,7 @@ const getAllLeads = async (req, res) => {
           lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
             ?.lead_AssignedToUserId
         ] || "Unknown",
+      lead_CustomerDetails: customerMap[lead.lead_Customer] || null,
     }));
 
     return res.status(201).json({
@@ -211,7 +223,7 @@ const getAllLeads = async (req, res) => {
       status: 201,
       message: "All Leads retrieved successfully",
       information: {
-        allLeads: leadsWithUserNames,
+        allLeads: leadsWithUserNamesAndCustomerDetails,
       },
     });
   } catch (error) {
@@ -332,13 +344,25 @@ const getLeadById = async (req, res) => {
       })
     );
 
-    // Return the lead with additional transfer history users
+    // Fetch customer details based on lead_Customer
+    const customer = await companyModel.Customer.findOne({
+      _id: lead.lead_Customer,
+      companyId,
+    });
+
+    // Append customer details to the lead object
+    const leadWithCustomerDetails = {
+      ...lead.toObject(),
+      customer_Details: customer || null,
+    };
+
+    // Return the lead with additional transfer history users and customer details
     return res.status(200).json({
       success: true,
       status: 200,
       message: "Lead retrieved successfully.",
       information: {
-        lead,
+        lead: leadWithCustomerDetails,
         leadTransferHistoryUsersNames,
       },
     });

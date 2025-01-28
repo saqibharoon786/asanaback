@@ -8,7 +8,7 @@ const createQuote = async (req, res) => {
   try {
     const user = req.user;
     const {
-      quote_Client,
+      quote_Customer,
       quote_SalesPerson,
       quote_Products,
       quote_Details,
@@ -29,7 +29,6 @@ const createQuote = async (req, res) => {
     // Generate unique quote identifier
     const quote_Identifier = await utils.generateUniqueQuoteId();
 
-
     const newQuoteDetails = {
       dateCreated: new Date(),
       status: quote_Details?.status || "Pending",
@@ -43,7 +42,7 @@ const createQuote = async (req, res) => {
     // Save quote
     const newQuote = await companyModel.Quote.create({
       companyId,
-      quote_Client,
+      quote_Customer,
       quote_SalesPerson,
       quote_Identifier,
       quote_Subject,
@@ -88,7 +87,7 @@ const EditQuote = async (req, res) => {
     const user = req.user;
     const { quoteId } = req.params; // Quote ID from request parameters
     const {
-      quote_Client,
+      quote_Customer,
       quote_SalesPerson,
       quote_Products,
       quote_Details,
@@ -129,24 +128,35 @@ const EditQuote = async (req, res) => {
       {
         $set: {
           companyId,
-          quote_Client: quote_Client || existingQuote.quote_Client,
-          quote_SalesPerson: quote_SalesPerson || existingQuote.quote_SalesPerson,
-          quote_Products: parsedQuoteProducts.length > 0 ? parsedQuoteProducts : existingQuote.quote_Products,
-          quote_BeforeTaxPrice: quote_BeforeTaxPrice || existingQuote.quote_BeforeTaxPrice,
+          quote_Customer: quote_Customer || existingQuote.quote_Customer,
+          quote_SalesPerson:
+            quote_SalesPerson || existingQuote.quote_SalesPerson,
+          quote_Products:
+            parsedQuoteProducts.length > 0
+              ? parsedQuoteProducts
+              : existingQuote.quote_Products,
+          quote_BeforeTaxPrice:
+            quote_BeforeTaxPrice || existingQuote.quote_BeforeTaxPrice,
           quote_TotalTax: quote_TotalTax || existingQuote.quote_TotalTax,
-          quote_AfterDiscountPrice: quote_AfterDiscountPrice || existingQuote.quote_AfterDiscountPrice,
-          quote_InitialPayment: quote_InitialPayment || existingQuote.quote_InitialPayment,
+          quote_AfterDiscountPrice:
+            quote_AfterDiscountPrice || existingQuote.quote_AfterDiscountPrice,
+          quote_InitialPayment:
+            quote_InitialPayment || existingQuote.quote_InitialPayment,
           quote_Subject: quote_Subject || existingQuote.quote_Subject,
           quote_Project: quote_Project || existingQuote.quote_Project,
           quote_LeadId: quote_LeadId || existingQuote.quote_LeadId,
           quote_Date: quote_Date || existingQuote.quote_Date,
           quote_ExpiryDate: quote_ExpiryDate || existingQuote.quote_ExpiryDate,
-          quote_ReferenceNumber: quote_ReferenceNumber || existingQuote.quote_ReferenceNumber,
+          quote_ReferenceNumber:
+            quote_ReferenceNumber || existingQuote.quote_ReferenceNumber,
           quote_Details: {
             ...existingQuote.quote_Details,
-            status: quote_Details?.status || existingQuote.quote_Details?.status,
+            status:
+              quote_Details?.status || existingQuote.quote_Details?.status,
           },
-          ...(quote_ImagePath && { quote_Image: { filePath: quote_ImagePath } }), // Only update image if a new one is uploaded
+          ...(quote_ImagePath && {
+            quote_Image: { filePath: quote_ImagePath },
+          }), // Only update image if a new one is uploaded
         },
       },
       { new: true } // Return the updated document
@@ -168,34 +178,54 @@ const EditQuote = async (req, res) => {
       message: error.message,
     });
   }
-};``
+};
 
 const getAllQuotes = async (req, res) => {
   try {
     const companyId = req.user.companyId;
-    var Quotes = await companyModel.Quote.find({ companyId, deleted: false });
 
-    if (!Quotes || Quotes.length === 0) {
+    // Fetch all quotes for the company
+    const quotes = await companyModel.Quote.find({ companyId, deleted: false });
+
+    // If no quotes are found, return an empty array
+    if (!quotes || quotes.length === 0) {
       return res.status(200).json({
         success: true,
         status: 200,
-        message: "No Quotes found",
+        message: "No quotes found",
         information: {
-          Quotes: [],
+          quotes: [],
         },
       });
     }
 
+    // Fetch customer details for each quote and attach them to the quote
+    const quotesWithCustomerDetails = await Promise.all(
+      quotes.map(async (quote) => {
+        // Fetch customer details for the quote's customer
+        const customer = await companyModel.Customer.findOne({
+          _id: quote.quote_Customer,
+          deleted: false,
+        });
+
+        // Attach customer details to the quote
+        return {
+          ...quote._doc,
+          quote_CustomerDetails: customer || null,
+        };
+      })
+    );
+
     return res.status(200).json({
       success: true,
       status: 200,
-      message: "Quotes retrieved successfully",
+      message: "Quotes and customer details retrieved successfully",
       information: {
-        Quotes,
+        quotes: quotesWithCustomerDetails,
       },
     });
   } catch (error) {
-    console.error("Error fetching Quotes:", error);
+    console.error("Error fetching quotes:", error);
     return res.status(500).json({
       success: false,
       status: 500,
@@ -207,30 +237,20 @@ const getAllQuotes = async (req, res) => {
 const getQuoteById = async (req, res) => {
   try {
     const companyId = req.user.companyId;
-    var { quoteId } = req.params;
+    const { quoteId } = req.params;
 
     // Fetch the quote by ID using findById
-    var quote = await companyModel.Quote.findById({ companyId, _id: quoteId });
+    const quote = await companyModel.Quote.findById(quoteId);
+    const customer = await companyModel.Customer.findById(quote.quote_Customer);
 
-    // If no quote is found, return a message with an empty array
-    if (!quote) {
-      return res.status(200).json({
-        success: true,
-        status: 404,
-        message: "No Quote found",
-        information: {
-          quote: [],
-        },
-      });
-    }
-
-    // If quote is found, return it in the response
+    // If quote is found, return it in the response along with the customer
     return res.status(200).json({
       success: true,
       status: 200,
       message: "Quote retrieved successfully",
       information: {
-        quote, // Wrap in an array to maintain consistency
+        quote,
+        customer,
       },
     });
   } catch (error) {
@@ -289,7 +309,7 @@ const approveQuoteById = async (req, res) => {
       companyId: companyId,
       invoice_Identifier: quote.quote_Identifier,
       invoice_Creater: quote.quote_Creater,
-      invoice_Client: quote.quote_Client,
+      invoice_Client: quote.quote_Customer,
       invoice_Products: quote.quote_Products,
       invoice_TotalPrice: quote.quote_TotalPrice,
       invoice_Details: {

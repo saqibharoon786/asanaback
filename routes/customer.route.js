@@ -8,9 +8,16 @@ const middleware = require("../middleware/index.middleware");
 router.post(
   "/add-customer",
   passport.authenticate("jwt", { session: false }),
-//   middleware.checkPermission("create"),
-//   upload.single("product_Image"),
+  middleware.checkPermission("create"),
+  //   upload.single("product_Image"),
   controller.customer.createCustomer
+);
+
+router.get(
+  "/get-all-customers",
+  passport.authenticate("jwt", { session: false }),
+  middleware.checkPermission("read"),
+  controller.customer.getAllCustomers
 );
 
 module.exports = router;

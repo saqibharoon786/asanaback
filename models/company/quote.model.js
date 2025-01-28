@@ -13,7 +13,7 @@ const quoteSchema = new mongoose.Schema(
     quote_SalesPerson: {
       type: String,
     },
-    quote_Client: {
+    quote_Customer: {
       type: String,
     },
     quote_Products: [
