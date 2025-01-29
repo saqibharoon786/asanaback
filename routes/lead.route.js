@@ -27,6 +27,13 @@ router.get(
 );
 
 router.get(
+  "/all-sales-employee-lad",
+  passport.authenticate("jwt", { session: false }),
+  middleware.checkPermission("read"),
+  controller.lead.getSalesEmployeeLeads
+);
+
+router.get(
   "/:leadId",
   passport.authenticate("jwt", { session: false }),
   middleware.checkPermission("read"),
@@ -60,7 +67,6 @@ router.patch(
   middleware.checkPermission("update"),
   controller.lead.leadTransferred
 );
-
 
 router.post(
   "/mass-transfer",

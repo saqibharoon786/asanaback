@@ -236,6 +236,121 @@ const getAllLeads = async (req, res) => {
   }
 };
 
+const getSalesEmployeeLeads = async (req, res) => {
+  try {
+    const companyId = req.user.companyId;
+    const userId = req.user.companyId;
+    // Fetch all leads for the company
+    const allLeads = await companyModel.Lead.find({
+      companyId: userId,
+      deleted: false,
+      $or: [
+        { lead_Creater: userId },
+        { "lead_TransferAndAssign.lead_TransferredByUserId": userId },
+        { "lead_TransferAndAssign.lead_AssignedToUserId": userId }
+      ]
+    });
+    
+    // Extract unique customer IDs from the leads
+    const customerIds = allLeads
+      .map((lead) => lead.lead_Customer)
+      .filter(Boolean);
+
+    // Fetch customer details for the extracted customer IDs
+    const customers = await companyModel.Customer.find({
+      _id: { $in: customerIds },
+    });
+
+    // Create a map of customer details for easy lookup
+    const customerMap = customers.reduce((map, customer) => {
+      map[customer._id] = customer;
+      return map;
+    }, {});
+
+    // Extract user IDs for creators, transferred by users, and assigned to users
+    const leadCreators = allLeads.map((lead) => lead.lead_Creater);
+    const leadTransferredByUserIds = allLeads
+      .map(
+        (lead) =>
+          lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
+            ?.lead_TransferredByUserId
+      )
+      .filter(Boolean);
+
+    const leadAssignedToUserIds = allLeads
+      .map(
+        (lead) =>
+          lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
+            ?.lead_AssignedToUserId
+      )
+      .filter(Boolean);
+
+    const leadPreviousUserIds = allLeads
+      .map(
+        (lead) =>
+          lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 2]
+            ?.lead_AssignedToUserId
+      )
+      .filter(Boolean);
+
+    // Fetch users for creators, transferred by users, and assigned to users
+    const users = await companyModel.User.find({
+      userId: {
+        $in: [
+          ...leadCreators,
+          ...leadTransferredByUserIds,
+          ...leadAssignedToUserIds,
+          ...leadPreviousUserIds,
+        ],
+      },
+    });
+
+    // Create a map of user names for easy lookup
+    const userMap = users.reduce((map, user) => {
+      map[user.userId] = user.name;
+      return map;
+    }, {});
+
+    // Map each lead to include the creator's name, transferred by, assigned to user names, and customer details
+    const leadsWithUserNamesAndCustomerDetails = allLeads.map((lead) => ({
+      ...lead._doc,
+      lead_CreaterName: userMap[lead.lead_Creater] || "Unknown",
+      lead_TransferredByUserName:
+        userMap[
+          lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
+            ?.lead_TransferredByUserId
+        ] || "Unknown",
+      lead_PreviousOwnerName:
+        userMap[
+          lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 2]
+            ?.lead_AssignedToUserId
+        ] || "No Previous Owner",
+      lead_AssignedToUserName:
+        userMap[
+          lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
+            ?.lead_AssignedToUserId
+        ] || "Unknown",
+      lead_CustomerDetails: customerMap[lead.lead_Customer] || null,
+    }));
+
+    return res.status(201).json({
+      success: true,
+      status: 201,
+      message: "All Leads retrieved successfully",
+      information: {
+        allLeads: leadsWithUserNamesAndCustomerDetails,
+      },
+    });
+  } catch (error) {
+    console.error("Error retrieving leads:", error);
+    return res.status(500).json({
+      success: false,
+      status: 500,
+      message: error.message,
+    });
+  }
+};
+
 const approveLeadById = async (req, res) => {
   try {
     const companyId = req.user.companyId;
@@ -628,6 +743,7 @@ const massDeleteLeads = async (req, res) => {
 const lead = {
   createLead,
   getAllLeads,
+  getSalesEmployeeLeads,
   getLeadById,
   approveLeadById,
   addOptionalDataToLead,
