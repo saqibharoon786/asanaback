@@ -202,18 +202,18 @@ const getAllLeads = async (req, res) => {
       lead_CreaterName: userMap[lead.lead_Creater] || "Unknown",
       lead_TransferredByUserName:
         userMap[
-        lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
-          ?.lead_TransferredByUserId
+          lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
+            ?.lead_TransferredByUserId
         ] || "Unknown",
       lead_PreviousOwnerName:
         userMap[
-        lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 2]
-          ?.lead_AssignedToUserId
+          lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 2]
+            ?.lead_AssignedToUserId
         ] || "No Previous Owner",
       lead_AssignedToUserName:
         userMap[
-        lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
-          ?.lead_AssignedToUserId
+          lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
+            ?.lead_AssignedToUserId
         ] || "Unknown",
       lead_CustomerDetails: customerMap[lead.lead_Customer] || null,
     }));
@@ -241,16 +241,50 @@ const getSalesEmployeeLeads = async (req, res) => {
     const companyId = req.user.companyId;
     const userId = req.user.userId;
 
-    // Fetch all leads for the company where the user is either the creator or in the transfer/assign array
-    const allLeads = await companyModel.Lead.find({
+    // Fetch department info for the user
+    const department = await companyModel.Department.findOne({
       companyId: companyId,
-      deleted: false,
-      $or: [
-        { lead_Creater: userId },
-        { "lead_TransferAndAssign.lead_AssignedToUserId": userId },
-        { "lead_TransferAndAssign.lead_TransferredByUserId": userId },
-      ],
+      department_Name: "Sales",
+      "department_Employees.userId": userId,
     });
+
+    let allLeads;
+
+    if (department) {
+      // Check if the user is a Team Lead in the Sales department
+      const isTeamLead = department.department_Employees.some(
+        (employee) =>
+          employee.userId.toString() === userId.toString() &&
+          employee.employee_Designation === "Team Lead"
+      );
+
+      if (isTeamLead) {
+        // If the user is a Team Lead, fetch all leads
+        allLeads = await companyModel.Lead.find();
+      } else {
+        // If the user is not a Team Lead, fetch only their own leads
+        allLeads = await companyModel.Lead.find({
+          companyId: companyId,
+          deleted: false,
+          $or: [
+            { lead_Creater: userId },
+            { "lead_TransferAndAssign.lead_AssignedToUserId": userId },
+            { "lead_TransferAndAssign.lead_TransferredByUserId": userId },
+          ],
+        });
+      }
+    } else {
+      // If the user is not part of the Sales department, fetch only their own leads
+      allLeads = await companyModel.Lead.find({
+        companyId: companyId,
+        deleted: false,
+        $or: [
+          { lead_Creater: userId },
+          { "lead_TransferAndAssign.lead_AssignedToUserId": userId },
+          { "lead_TransferAndAssign.lead_TransferredByUserId": userId },
+        ],
+      });
+    }
 
     // Extract unique customer IDs from the leads
     const customerIds = allLeads
@@ -318,18 +352,18 @@ const getSalesEmployeeLeads = async (req, res) => {
       lead_CreaterName: userMap[lead.lead_Creater] || "Unknown",
       lead_TransferredByUserName:
         userMap[
-        lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
-          ?.lead_TransferredByUserId
+          lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
+            ?.lead_TransferredByUserId
         ] || "Unknown",
       lead_PreviousOwnerName:
         userMap[
-        lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 2]
-          ?.lead_AssignedToUserId
+          lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 2]
+            ?.lead_AssignedToUserId
         ] || "No Previous Owner",
       lead_AssignedToUserName:
         userMap[
-        lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
-          ?.lead_AssignedToUserId
+          lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
+            ?.lead_AssignedToUserId
         ] || "Unknown",
       lead_CustomerDetails: customerMap[lead.lead_Customer] || null,
     }));
@@ -363,7 +397,7 @@ const approveLeadById = async (req, res) => {
       companyId,
     });
 
-    // Check if the lead exists
+    // Check if lead exists
     if (!lead) {
       return res.status(404).json({
         success: false,
@@ -373,7 +407,7 @@ const approveLeadById = async (req, res) => {
     }
 
     // Ensure the lead is not already approved
-    if (lead.lead_Details.status === "Approved") {
+    if (lead.lead_Status === "Approved") {
       return res.status(400).json({
         success: false,
         status: 400,
@@ -382,8 +416,8 @@ const approveLeadById = async (req, res) => {
     }
 
     // Update the lead status to "Approved"
-    lead.lead_Details.status = "Approved";
-    const updatedLead = await lead.save();
+    lead.lead_Status = "Approved";
+    const updatedLead = await lead.save(); // Save the updated lead document
 
     // Return the success response with the updated lead details
     return res.status(200).json({

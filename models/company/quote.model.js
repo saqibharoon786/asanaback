@@ -8,7 +8,7 @@ const quoteSchema = new mongoose.Schema(
       type: String,
     },
     quote_Creater: {
-      type: String,
+      type: String, 
     },
     quote_SalesPerson: {
       type: String,

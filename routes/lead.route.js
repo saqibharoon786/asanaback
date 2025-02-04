@@ -96,4 +96,11 @@ router.post(
   controller.lead.massDeleteLeads
 );
 
+router.patch(
+  "/approve-lead/:leadId",
+  passport.authenticate("jwt", { session: false }),
+  middleware.checkPermission("update"),
+  controller.lead.approveLeadById
+);
+
 module.exports = router;

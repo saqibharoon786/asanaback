@@ -55,10 +55,11 @@ const leadSchema = new mongoose.Schema(
     },
     lead_Status: {
       type: String,
-      enum: ["Prospect", "Qualified", "Close-Won"],
-      default: "Prospect",
+      enum: ["Pending", "Approved"
+      ],
+      default: "Pending",
     },
-    // Lead score calcualted by the following attributes -- START
+    
     lead_Score: {
       type: Number,
       default: 0,
@@ -176,7 +177,7 @@ schedule.scheduleJob("0 0 * * *", async () => {
     await Lead.updateMany(
       {
         createdAt: { $lte: sixDaysAgo },
-        lead_Label: { $ne: "Cold" }, // Only update if not already Cold
+        lead_Label: { $ne: "Cold" }, 
       },
       { $set: { lead_Label: "Cold" } }
     );
