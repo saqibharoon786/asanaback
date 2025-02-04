@@ -202,18 +202,18 @@ const getAllLeads = async (req, res) => {
       lead_CreaterName: userMap[lead.lead_Creater] || "Unknown",
       lead_TransferredByUserName:
         userMap[
-          lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
-            ?.lead_TransferredByUserId
+        lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
+          ?.lead_TransferredByUserId
         ] || "Unknown",
       lead_PreviousOwnerName:
         userMap[
-          lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 2]
-            ?.lead_AssignedToUserId
+        lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 2]
+          ?.lead_AssignedToUserId
         ] || "No Previous Owner",
       lead_AssignedToUserName:
         userMap[
-          lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
-            ?.lead_AssignedToUserId
+        lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
+          ?.lead_AssignedToUserId
         ] || "Unknown",
       lead_CustomerDetails: customerMap[lead.lead_Customer] || null,
     }));
@@ -239,18 +239,19 @@ const getAllLeads = async (req, res) => {
 const getSalesEmployeeLeads = async (req, res) => {
   try {
     const companyId = req.user.companyId;
-    const userId = req.user.companyId;
-    // Fetch all leads for the company
+    const userId = req.user.userId;
+
+    // Fetch all leads for the company where the user is either the creator or in the transfer/assign array
     const allLeads = await companyModel.Lead.find({
-      companyId: userId,
+      companyId: companyId,
       deleted: false,
       $or: [
         { lead_Creater: userId },
+        { "lead_TransferAndAssign.lead_AssignedToUserId": userId },
         { "lead_TransferAndAssign.lead_TransferredByUserId": userId },
-        { "lead_TransferAndAssign.lead_AssignedToUserId": userId }
-      ]
+      ],
     });
-    
+
     // Extract unique customer IDs from the leads
     const customerIds = allLeads
       .map((lead) => lead.lead_Customer)
@@ -317,18 +318,18 @@ const getSalesEmployeeLeads = async (req, res) => {
       lead_CreaterName: userMap[lead.lead_Creater] || "Unknown",
       lead_TransferredByUserName:
         userMap[
-          lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
-            ?.lead_TransferredByUserId
+        lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
+          ?.lead_TransferredByUserId
         ] || "Unknown",
       lead_PreviousOwnerName:
         userMap[
-          lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 2]
-            ?.lead_AssignedToUserId
+        lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 2]
+          ?.lead_AssignedToUserId
         ] || "No Previous Owner",
       lead_AssignedToUserName:
         userMap[
-          lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
-            ?.lead_AssignedToUserId
+        lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
+          ?.lead_AssignedToUserId
         ] || "Unknown",
       lead_CustomerDetails: customerMap[lead.lead_Customer] || null,
     }));

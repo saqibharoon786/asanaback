@@ -1,86 +1,68 @@
 const companyModel = require("../models/company/companyIndex.model");
+const utils = require("../utils/utilsIndex");
 
-// Create an Invoice
-const createInvoice = async (req, res) => {
+
+
+ const createInvoice = async (req, res) => {
+
   const companyId = req.user.companyId;
+
   try {
     const user = req.user;
     const {
-      invoice_Client,
+      invoice_Customer,
+      invoice_SalesPerson,
       invoice_Products,
       invoice_Details,
       invoice_InitialPayment,
       invoice_BeforeTaxPrice,
-      invoice_AfterTaxPrice,
+      invoice_TotalTax,
       invoice_AfterDiscountPrice,
+      invoice_Subject,
+      invoice_Project,
+      invoice_QuoteId,
+      invoice_Date,
+      invoice_DueDate,
+      invoice_ReferenceNumber,
     } = req.body;
-
-    // Verify product existence and stock
-    for (const item of invoice_Products) {
-      const { product, quantity, product_AfterDiscountPrice } = item;
-
-      const dbProduct = await companyModel.Product.findOne({
-        product_Name: product,
-        companyId,
-      });
-
-      if (!dbProduct) {
-        return res.status(404).json({
-          success: false,
-          status: 404,
-          message: `Product '${product}' not found in the database.`,
-        });
-      }
-
-      if (dbProduct.product_StockQuantity < quantity) {
-        return res.status(400).json({
-          success: false,
-          status: 400,
-          message: `Insufficient stock for product '${product}'.`,
-        });
-      }
-    }
-
-    // Generate unique invoice identifier
-    const invoiceCount = await companyModel.Invoice.countDocuments();
-    const invoice_Identifier = `${user.userId}-${invoiceCount + 1}`;
+  
+    const parsedInvoiceProducts = JSON.parse(invoice_Products);
+        // Generate unique invoice identifier
+    const invoice_Identifier = await utils.generateUniqueInvoiceId();
 
     const newInvoiceDetails = {
       dateCreated: new Date(),
       status: invoice_Details?.status || "Unpaid",
     };
 
+    var invoice_ImagePath = "";
+    if (req.file) {
+      invoice_ImagePath = `/uploads/invoices/${req.file.filename}`;
+    }
+
     // Save invoice
     const newInvoice = await companyModel.Invoice.create({
       companyId,
+      invoice_Customer,
+      invoice_SalesPerson,
       invoice_Identifier,
-      invoice_Creater: {
-        name: user.name,
-        email: user.email,
-        contact: user.contact,
-      },
-      invoice_Client,
-      invoice_Products, // Pass products directly, including discount fields
+      invoice_Subject,
+      invoice_Project,
+      invoice_Creater: user.userId,
+      invoice_Products: parsedInvoiceProducts,
       invoice_BeforeTaxPrice,
-      invoice_AfterTaxPrice,
+      invoice_TotalTax,
+      invoice_ReferenceNumber,
       invoice_AfterDiscountPrice,
       invoice_InitialPayment,
       invoice_Details: newInvoiceDetails,
+      invoice_QuoteId: invoice_QuoteId || "",
+      invoice_Date,
+      invoice_DueDate,
+      invoice_Image: {
+        filePath: invoice_ImagePath,
+      },
     });
-
-    // Update stock quantities
-    for (const item of invoice_Products) {
-      const product = await companyModel.Product.findOne({
-        companyId,
-        product_Name: item.product,
-        deleted: false,
-      });
-
-      if (product) {
-        product.product_StockQuantity -= item.quantity;
-        await product.save();
-      }
-    }
 
     return res.status(200).json({
       success: true,
@@ -99,6 +81,8 @@ const createInvoice = async (req, res) => {
     });
   }
 };
+
+
 
 const getAllInvoices = async (req, res) => {
   try {

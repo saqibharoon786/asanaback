@@ -20,4 +20,19 @@ router.get(
   controller.customer.getAllCustomers
 );
 
+router.get(
+  "/:customerId",
+  passport.authenticate("jwt", { session: false }),
+  middleware.checkPermission("read"),
+  controller.customer.getCustomerById
+);
+
+router.patch(
+  "/update-customer/:customerId",
+  passport.authenticate("jwt", { session: false }),
+  middleware.checkPermission("update"),
+  controller.customer.updateCustomerById
+);
+
+
 module.exports = router;

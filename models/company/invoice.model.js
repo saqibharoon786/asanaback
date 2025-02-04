@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-// Product schema
+// Invoice schema
 const invoiceSchema = new mongoose.Schema(
   {
     companyId: { type: String },
@@ -8,20 +8,21 @@ const invoiceSchema = new mongoose.Schema(
       type: String,
     },
     invoice_Creater: {
-      name: { type: String },
-      email: { type: String },
-      contact: { type: String },
+      type: String,
     },
-    invoice_Client: {
-      client_Name: { type: String },
-      client_Email: { type: String },
-      client_Contact: { type: String },
-      client_Address: { type: String },
+    invoice_SalesPerson: {
+      type: String,
+    },
+    invoice_Customer: {
+      type: String,
     },
     invoice_Products: [
       {
         product: {
           type: String,
+        },
+        product_SellingPrice: {
+          type: Number,
         },
         quantity: {
           type: Number,
@@ -39,10 +40,6 @@ const invoiceSchema = new mongoose.Schema(
           type: Number,
           default: 0,
         },
-        product_Tax: {
-          type: Number,
-          default: 0,
-        },
         product_DiscountPercentage: {
           type: Number,
           default: 0,
@@ -57,13 +54,14 @@ const invoiceSchema = new mongoose.Schema(
         },
       },
     ],
+    invoice_Image: { filePath: { type: String } },
     invoice_InitialPayment: {
       type: Number,
     },
     invoice_BeforeTaxPrice: {
       type: Number,
     },
-    invoice_AfterTaxPrice: {
+    invoice_TotalTax: {
       type: Number,
     },
     invoice_AfterDiscountPrice: {
@@ -73,9 +71,28 @@ const invoiceSchema = new mongoose.Schema(
       dateCreated: { type: Date, default: Date.now },
       status: {
         type: String,
-        enum: ["Paid", "Unpaid"],
+        enum: ["Unpaid", "Paid"],
         default: "Unpaid",
       },
+    },
+    invoice_Subject: {
+      type: String,
+    },
+    invoice_Project: {
+      type: String,
+    },
+    invoice_LeadId: {
+      type: String,
+    },
+    invoice_Date: {
+      type: Date,
+      default: Date.now,
+    },
+    invoice_DueDate: {
+      type: Date,
+    },
+    invoice_ReferenceNumber: {
+      type: String,
     },
     deleted: { type: Boolean, default: false },
   },

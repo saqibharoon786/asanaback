@@ -27,7 +27,7 @@ router.get(
 );
 
 router.get(
-  "/all-sales-employee-lad",
+  "/all-sales-employee-leads",
   passport.authenticate("jwt", { session: false }),
   middleware.checkPermission("read"),
   controller.lead.getSalesEmployeeLeads
