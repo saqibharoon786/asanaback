@@ -5,7 +5,6 @@ const createCustomer = async (req, res) => {
   const companyId = req.user.companyId;
   const userId = req.user.userId;
 
-  console.log("here");
   try {
     const {
       customer_GeneralDetails,
