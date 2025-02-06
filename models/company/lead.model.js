@@ -23,17 +23,40 @@ const leadSchema = new mongoose.Schema(
     lead_Creater: {
       type: String,
     },
-    lead_ContactPerson: {
+    lead_Type: {
       type: String,
+      enum: [
+        "business",
+        "individual",
+      ],
     },
     lead_Customer: {
-      type: String,
+      customer_Name: {
+        type: String,
+      },
+      customer_Email: {
+        type: String,
+      },
+      customer_Contact: {
+        type: String,
+      },
+      customer_Address: {
+        type: String,
+      },
+    },
+    lead_ContactPerson: {
+      contactPerson_Name: {
+        type: String,
+      },
+      contactPerson_Email: {
+        type: String,
+      },
+      contactPerson_Contact: {
+        type: String,
+      },
     },
     lead_Title: {
       type: String,
-    },
-    lead_Value: {
-      type: Number,
     },
     lead_Label: {
       type: String,

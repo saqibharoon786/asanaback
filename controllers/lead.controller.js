@@ -6,16 +6,40 @@ const createLead = async (req, res) => {
   try {
     const companyId = req.user.companyId;
     const userId = req.user.userId;
-    const { lead_Customer, lead_Title, lead_Source, lead_Scope } = req.body;
+    const { customer_Name, customer_Email, customer_Contact, customer_Address, contactPerson_Name, contactPerson_Email, contactPerson_Contact, lead_Type, lead_Title, lead_Source, lead_Scope } = req.body;
+
+    const lead_Customer = {
+      customer_Name: customer_Name,
+      customer_Email: customer_Email,
+      customer_Contact: customer_Contact,
+      customer_Address: customer_Address
+    };
+
+    var lead_ContactPerson;
+    if (lead_Type === "individual") {
+      lead_ContactPerson = {
+        contactPerson_Name: customer_Name,
+        contactPerson_Email: customer_Email,
+        contactPerson_Contact: customer_Contact,
+      };
+    }
+    else if (lead_Type === "business"){
+      lead_ContactPerson = {
+        contactPerson_Name,
+        contactPerson_Email,
+        contactPerson_Contact,
+      };
+    }
 
     const leadIdentifier = await utils.generateUniqueLeadId();
-
     // Create a new lead document
     const savedLead = await companyModel.Lead.create({
       companyId,
       leadIdentifier,
       lead_Creater: userId,
       lead_Customer,
+      lead_ContactPerson,
+      lead_Type,
       lead_Title,
       lead_Source,
       lead_Label: "Hot",
@@ -136,22 +160,6 @@ const getAllLeads = async (req, res) => {
       deleted: false,
     });
 
-    // Extract unique customer IDs from the leads
-    const customerIds = allLeads
-      .map((lead) => lead.lead_Customer)
-      .filter(Boolean);
-
-    // Fetch customer details for the extracted customer IDs
-    const customers = await companyModel.Customer.find({
-      _id: { $in: customerIds },
-    });
-
-    // Create a map of customer details for easy lookup
-    const customerMap = customers.reduce((map, customer) => {
-      map[customer._id] = customer;
-      return map;
-    }, {});
-
     // Extract user IDs for creators, transferred by users, and assigned to users
     const leadCreators = allLeads.map((lead) => lead.lead_Creater);
     const leadTransferredByUserIds = allLeads
@@ -197,7 +205,7 @@ const getAllLeads = async (req, res) => {
     }, {});
 
     // Map each lead to include the creator's name, transferred by, assigned to user names, and customer details
-    const leadsWithUserNamesAndCustomerDetails = allLeads.map((lead) => ({
+    const leadsWithUserNames = allLeads.map((lead) => ({
       ...lead._doc,
       lead_CreaterName: userMap[lead.lead_Creater] || "Unknown",
       lead_TransferredByUserName:
@@ -215,7 +223,6 @@ const getAllLeads = async (req, res) => {
           lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
             ?.lead_AssignedToUserId
         ] || "Unknown",
-      lead_CustomerDetails: customerMap[lead.lead_Customer] || null,
     }));
 
     return res.status(201).json({
@@ -223,11 +230,84 @@ const getAllLeads = async (req, res) => {
       status: 201,
       message: "All Leads retrieved successfully",
       information: {
-        allLeads: leadsWithUserNamesAndCustomerDetails,
+        allLeads: leadsWithUserNames,
       },
     });
   } catch (error) {
     console.error("Error retrieving leads:", error);
+    return res.status(500).json({
+      success: false,
+      status: 500,
+      message: error.message,
+    });
+  }
+};
+
+const getLeadById = async (req, res) => {
+  try {
+    const companyId = req.user.companyId;
+    const { leadId } = req.params;
+
+    // Fetch the lead using leadId and companyId
+    const lead = await companyModel.Lead.findOne({
+      _id: leadId,
+      companyId,
+    });
+
+    if (!lead) {
+      return res.status(404).json({
+        success: false,
+        status: 404,
+        message: "No Lead found.",
+        information: { lead: [] },
+      });
+    }
+
+    // Extract lead_TransferAndAssign
+    const leadTransferAndAssign = lead.lead_TransferAndAssign || [];
+
+    // Fetch user details based on IDs in lead_TransferAndAssign
+    const userIds = [
+      ...new Set(
+        leadTransferAndAssign.flatMap((transfer) => [
+          transfer.lead_TransferredByUserId,
+          transfer.lead_AssignedToUserId,
+        ])
+      ),
+    ];
+
+    // Simulating user model lookup (Replace with actual DB query to get users)
+    const users = await companyModel.User.find(
+      { userId: { $in: userIds } },
+      "userId name"
+    );
+
+    const userMap = users.reduce((map, user) => {
+      map[user.userId] = user.name;
+      return map;
+    }, {});
+
+    // Map transfer history with user names
+    const leadTransferHistoryUsersNames = leadTransferAndAssign.map(
+      (transfer) => ({
+        transferredBy: userMap[transfer.lead_TransferredByUserId] || "Unknown",
+        assignedTo: userMap[transfer.lead_AssignedToUserId] || "Unknown",
+        transferredAt: transfer.transferredAt,
+      })
+    );
+
+    // Return the lead with additional transfer history users and customer details
+    return res.status(200).json({
+      success: true,
+      status: 200,
+      message: "Lead retrieved successfully.",
+      information: {
+        lead,
+        leadTransferHistoryUsersNames,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching lead by ID:", error);
     return res.status(500).json({
       success: false,
       status: 500,
@@ -286,22 +366,6 @@ const getSalesEmployeeLeads = async (req, res) => {
       });
     }
 
-    // Extract unique customer IDs from the leads
-    const customerIds = allLeads
-      .map((lead) => lead.lead_Customer)
-      .filter(Boolean);
-
-    // Fetch customer details for the extracted customer IDs
-    const customers = await companyModel.Customer.find({
-      _id: { $in: customerIds },
-    });
-
-    // Create a map of customer details for easy lookup
-    const customerMap = customers.reduce((map, customer) => {
-      map[customer._id] = customer;
-      return map;
-    }, {});
-
     // Extract user IDs for creators, transferred by users, and assigned to users
     const leadCreators = allLeads.map((lead) => lead.lead_Creater);
     const leadTransferredByUserIds = allLeads
@@ -347,7 +411,7 @@ const getSalesEmployeeLeads = async (req, res) => {
     }, {});
 
     // Map each lead to include the creator's name, transferred by, assigned to user names, and customer details
-    const leadsWithUserNamesAndCustomerDetails = allLeads.map((lead) => ({
+    const leadsWithUserNames = allLeads.map((lead) => ({
       ...lead._doc,
       lead_CreaterName: userMap[lead.lead_Creater] || "Unknown",
       lead_TransferredByUserName:
@@ -365,7 +429,6 @@ const getSalesEmployeeLeads = async (req, res) => {
           lead.lead_TransferAndAssign[lead.lead_TransferAndAssign.length - 1]
             ?.lead_AssignedToUserId
         ] || "Unknown",
-      lead_CustomerDetails: customerMap[lead.lead_Customer] || null,
     }));
 
     return res.status(201).json({
@@ -373,7 +436,7 @@ const getSalesEmployeeLeads = async (req, res) => {
       status: 201,
       message: "All Leads retrieved successfully",
       information: {
-        allLeads: leadsWithUserNamesAndCustomerDetails,
+        allLeads: leadsWithUserNames,
       },
     });
   } catch (error) {
@@ -437,91 +500,6 @@ const approveLeadById = async (req, res) => {
       status: 500,
       message:
         error.message || "An error occurred while processing the request.",
-    });
-  }
-};
-
-const getLeadById = async (req, res) => {
-  try {
-    const companyId = req.user.companyId;
-    const { leadId } = req.params;
-
-    // Fetch the lead using leadId and companyId
-    const lead = await companyModel.Lead.findOne({
-      _id: leadId,
-      companyId,
-    });
-
-    if (!lead) {
-      return res.status(404).json({
-        success: false,
-        status: 404,
-        message: "No Lead found.",
-        information: { lead: [] },
-      });
-    }
-
-    // Extract lead_TransferAndAssign
-    const leadTransferAndAssign = lead.lead_TransferAndAssign || [];
-
-    // Fetch user details based on IDs in lead_TransferAndAssign
-    const userIds = [
-      ...new Set(
-        leadTransferAndAssign.flatMap((transfer) => [
-          transfer.lead_TransferredByUserId,
-          transfer.lead_AssignedToUserId,
-        ])
-      ),
-    ];
-
-    // Simulating user model lookup (Replace with actual DB query to get users)
-    const users = await companyModel.User.find(
-      { userId: { $in: userIds } },
-      "userId name"
-    );
-
-    const userMap = users.reduce((map, user) => {
-      map[user.userId] = user.name;
-      return map;
-    }, {});
-
-    // Map transfer history with user names
-    const leadTransferHistoryUsersNames = leadTransferAndAssign.map(
-      (transfer) => ({
-        transferredBy: userMap[transfer.lead_TransferredByUserId] || "Unknown",
-        assignedTo: userMap[transfer.lead_AssignedToUserId] || "Unknown",
-        transferredAt: transfer.transferredAt,
-      })
-    );
-
-    // Fetch customer details based on lead_Customer
-    const customer = await companyModel.Customer.findOne({
-      _id: lead.lead_Customer,
-      companyId,
-    });
-
-    // Append customer details to the lead object
-    const leadWithCustomerDetails = {
-      ...lead.toObject(),
-      customer_Details: customer || null,
-    };
-
-    // Return the lead with additional transfer history users and customer details
-    return res.status(200).json({
-      success: true,
-      status: 200,
-      message: "Lead retrieved successfully.",
-      information: {
-        lead: leadWithCustomerDetails,
-        leadTransferHistoryUsersNames,
-      },
-    });
-  } catch (error) {
-    console.error("Error fetching lead by ID:", error);
-    return res.status(500).json({
-      success: false,
-      status: 500,
-      message: error.message,
     });
   }
 };

@@ -5,10 +5,10 @@ const customerSchema = new mongoose.Schema({
     type: String,
   },
   //General Details
-  customer_GeneralDetails: {
+  customer_GeneralDetails: {  
     customer_Type: {
       type: String,
-      enum: ["Business", "Individual"],
+      enum: ["business", "individual"],
     },
     customer_PrimaryInfo: {
       salutation: { type: String },
@@ -31,13 +31,17 @@ const customerSchema = new mongoose.Schema({
   },
   // Other Details
   customer_OtherDetails: {
+    customer_TRN: {
+      type: String,
+    },    
+    customer_CompanyId: {
+      type: String,
+    }, 
     customer_Currency: {
       type: String,
     },
     customer_PaymentTerms: {
       type: String,
-      enum: ["Due On Receipt", "Net 15", "Net 30", "Net 45", "Net 60"],
-      default: "Due On Receipt",
     },
     customer_EnablePortal: {
       type: Boolean,
@@ -49,6 +53,9 @@ const customerSchema = new mongoose.Schema({
     customer_TaxRate: {
       type: Number,
     },
+    customer_PortalLanguage: {
+      type: String,
+    },
     customer_Documents: [
       {
         filePath: { type: String },
@@ -57,19 +64,25 @@ const customerSchema = new mongoose.Schema({
   },
   // Address
   customer_Address: {
-    billingAddress: {
-      street: { type: String },
-      city: { type: String },
-      state: { type: String },
-      postalCode: { type: String },
-      country: { type: String },
+    billingAddress: { 
+      billingAddress_Attention: { type: String },
+      billingAddress_Country: { type: String },
+      billingAddress_State: { type: String },
+      billingAddress_Address: { type: String },
+      billingAddress_City: { type: String },
+      billingAddress_ZipCode: { type: String },
+      billingAddress_Phone: { type: String },
+      billingAddress_FaxNo: { type: String },
     },
     shippingAddress: {
-      street: { type: String },
-      city: { type: String },
-      state: { type: String },
-      postalCode: { type: String },
-      country: { type: String },
+      shippingAddress_Attention: { type: String },
+      shippingAddress_Country: { type: String },
+      shippingAddress_State: { type: String },
+      shippingAddress_Address: { type: String },
+      shippingAddress_City: { type: String },
+      shippingAddress_ZipCode: { type: String },
+      shippingAddress_Phone: { type: String },
+      shippingAddress_FaxNo: { type: String },
     },
   },
   customer_ContactPersons: [

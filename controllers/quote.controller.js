@@ -187,41 +187,41 @@ const getAllQuotes = async (req, res) => {
     // Fetch all quotes for the company
     const quotes = await companyModel.Quote.find({ companyId, deleted: false });
 
-    // If no quotes are found, return an empty array
-    if (!quotes || quotes.length === 0) {
-      return res.status(200).json({
-        success: true,
-        status: 200,
-        message: "No quotes found",
-        information: {
-          quotes: [],
-        },
-      });
-    }
+    // // If no quotes are found, return an empty array
+    // if (!quotes || quotes.length === 0) {
+    //   return res.status(200).json({
+    //     success: true,
+    //     status: 200,
+    //     message: "No quotes found",
+    //     information: {
+    //       quotes: [],
+    //     },
+    //   });
+    // }
 
-    // Fetch customer details for each quote and attach them to the quote
-    const quotesWithCustomerDetails = await Promise.all(
-      quotes.map(async (quote) => {
-        // Fetch customer details for the quote's customer
-        const customer = await companyModel.Customer.findOne({
-          _id: quote.quote_Customer,
-          deleted: false,
-        });
+    // // Fetch customer details for each quote and attach them to the quote
+    // const quotesWithCustomerDetails = await Promise.all(
+    //   quotes.map(async (quote) => {
+    //     // Fetch customer details for the quote's customer
+    //     const customer = await companyModel.Customer.findOne({
+    //       _id: quote.quote_Customer,
+    //       deleted: false,
+    //     });
 
-        // Attach customer details to the quote
-        return {
-          ...quote._doc,
-          quote_CustomerDetails: customer || null,
-        };
-      })
-    );
+    //     // Attach customer details to the quote
+    //     return {
+    //       ...quote._doc,
+    //       quote_CustomerDetails: customer || null,
+    //     };
+    //   })
+    // );
 
     return res.status(200).json({
       success: true,
       status: 200,
       message: "Quotes and customer details retrieved successfully",
       information: {
-        quotes: quotesWithCustomerDetails,
+        quotes: quotes,
       },
     });
   } catch (error) {
