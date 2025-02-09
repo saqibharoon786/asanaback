@@ -9,6 +9,7 @@ var lead = require("./lead.controller");
 var invoice = require("./invoice.controller");
 var event = require("./event.controller");
 var customer = require("./customer.controller");
+var notification=require("./notification.controller")
 
 var controller = {
   loggingIn,
@@ -21,7 +22,8 @@ var controller = {
   lead,
   invoice,
   event,
-  customer
+  customer,
+  notification
 };
 
 module.exports = controller;

@@ -9,6 +9,11 @@ const Package = require("./package.model")
 const Company = require("./company.model")
 const Event = require("./event.model")
 const Customer = require("./customer.model")
+const Notification=require("./notification.model")
+const File=require("./file.model")
+const Task=require("./task.model")
+const Note=require("./note.model")
+
 
 const companyModel = {
   User,
@@ -22,7 +27,11 @@ const companyModel = {
   Company,
   Event,
   Project,
-  Customer
+  Customer,
+  Notification,
+  File,
+  Task,
+  Note
 };
 
 module.exports = companyModel;

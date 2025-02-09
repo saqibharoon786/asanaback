@@ -13,6 +13,8 @@ const quote = require("./quote.route");
 const invoice  = require("./invoice.route");
 const event  = require("./event.route");
 const customer  = require("./customer.route");
+const notifcation=require("./notification.route")
+const project=require('./project.route')
 
 // router.use("/", (req, res) => {
 //   res.send("HOME");
@@ -30,5 +32,7 @@ router.use("/quote", quote);
 router.use("/invoice", invoice);
 router.use("/event", event);
 router.use("/customer", customer);
+router.use("/notification", notifcation)
+router.use("/project",project)
 
 module.exports = router;
