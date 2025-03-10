@@ -1,5 +1,7 @@
 const companyModel = require("../models/company/companyIndex.model");
 const express = require("express");
+const mongoose = require("mongoose"); // ✅ Import mongoose
+
 
 const creategoal = async (req, res) => {
   const user = req.user;
@@ -9,7 +11,7 @@ const creategoal = async (req, res) => {
     return res.status(401).json({ message: "User not authenticated" });
   }
 
-  const { goalTitle, timePeriod, privacy, members, status, statusupdate } =
+  const { goalTitle, timePeriod, privacy, members, status, statusupdate,Updatemethod,ProgressSource,Measurement, subGoal } =
     req.body; // Removed summary
 
   try {
@@ -25,7 +27,11 @@ const creategoal = async (req, res) => {
       privacy,
       members,
       status,
-      statusupdate, // Corrected to status (not ststus)
+      statusupdate,
+      Updatemethod,
+      ProgressSource,
+      Measurement, 
+      subGoal,
     });
 
     res.status(201).json({
@@ -139,6 +145,13 @@ const updateGoalStatus = async (req, res) => {
     });
   }
 };
+
+
+
+
+
+
+
 
 const goal = {
   creategoal,

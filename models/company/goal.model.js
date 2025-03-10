@@ -36,6 +36,23 @@ const goalSchema = new mongoose.Schema({
   statusupdate:{
     type:String,
   },
+  progress:{
+    type:String,
+  },
+
+  Updatemethod:{
+    type:String,
+  },
+  ProgressSource:{
+    type:String,
+  },
+  Measurement:{
+    type:String,
+  },
+  subGoal:[{
+    type:String
+  }],
+
 });
 
 const Goal = mongoose.model("Goal", goalSchema);
