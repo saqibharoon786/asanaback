@@ -1,4 +1,4 @@
-require('dotenv').config();
+require("dotenv").config();
 const express = require("express");
 const connectDB = require("./config/db");
 const indexRouter = require("./routes/index.route");
@@ -22,7 +22,7 @@ const PORT = process.env.PORT;
 connectDB();
 
 // Serve static files (uploads folder)
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Use routes
 app.use("/", indexRouter);

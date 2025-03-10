@@ -68,7 +68,7 @@ const addCompany = async (req, res) => {
     });
 
     // Add default departments
-    const defaultDepartments = ["Sales", "HR", "Marketing", "Web-Dev"];
+    const defaultDepartments = ["Sales", "HR", "Marketing", "Web-Dev", "Seo"];
 
     const departmentPromises = defaultDepartments.map((departmentName) => {
       return companyModel.Department.create({

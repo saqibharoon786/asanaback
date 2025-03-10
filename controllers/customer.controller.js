@@ -189,7 +189,7 @@ const customer = {
   createCustomer,
   getAllCustomers,
   getCustomerById,
-  updateCustomerById
+  updateCustomerById,
 };
 
 module.exports = customer;

@@ -5,14 +5,12 @@ const upload = require("../config/multer");
 const passport = require("../middleware/passportAuth.middleware");
 const middleware = require("../middleware/index.middleware");
 
-
 // router.post(
 //   "/add-department",
 //   passport.authenticate("jwt", { session: false }),
 //   middleware.checkPermission("create"),
 //   controller.department.addDepartment
 // );
-
 
 router.get(
   "/get-departments",
@@ -36,7 +34,6 @@ router.delete(
   controller.department.deleteEmployee
 );
 
-
 router.get(
   "/get-employees",
   passport.authenticate("jwt", { session: false }),
@@ -58,6 +55,16 @@ router.get(
   middleware.checkPermission("read"),
   controller.department.getEmployeeInformation
 );
+
+router.get(
+  "/get-employee-by-department",
+  passport.authenticate("jwt",{ session: false }),
+  // middleware.checkPermission("read"),
+  controller.department.getEmployeesByDepartment
+);
+
+
+
 
 router.get(
   "/get-sales-employees",

@@ -13,12 +13,12 @@ const Notification=require("./notification.model")
 const File=require("./file.model")
 const Task=require("./task.model")
 const Note=require("./note.model")
+const goal=require("./goal.model")
 
 
 const companyModel = {
   User,
   Department,
-  Project,
   Product,
   Quote,
   Lead,
@@ -31,7 +31,8 @@ const companyModel = {
   Notification,
   File,
   Task,
-  Note
+  Note,
+  goal
 };
 
 module.exports = companyModel;

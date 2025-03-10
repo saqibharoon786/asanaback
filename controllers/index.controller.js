@@ -10,6 +10,9 @@ var invoice = require("./invoice.controller");
 var event = require("./event.controller");
 var customer = require("./customer.controller");
 var notification=require("./notification.controller")
+var task=require("./task.controller")
+var goal=require("./goal.controller")
+
 
 var controller = {
   loggingIn,
@@ -23,7 +26,9 @@ var controller = {
   invoice,
   event,
   customer,
-  notification
+  notification,
+  task,
+  goal
 };
 
 module.exports = controller;

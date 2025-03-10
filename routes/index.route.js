@@ -15,6 +15,8 @@ const event  = require("./event.route");
 const customer  = require("./customer.route");
 const notifcation=require("./notification.route")
 const project=require('./project.route')
+const task=require('./task.route')
+const goal=require('./goal.route')
 
 // router.use("/", (req, res) => {
 //   res.send("HOME");
@@ -34,5 +36,7 @@ router.use("/event", event);
 router.use("/customer", customer);
 router.use("/notification", notifcation)
 router.use("/project",project)
+router.use("/task",task)
+router.use("/goal",goal)
 
 module.exports = router;

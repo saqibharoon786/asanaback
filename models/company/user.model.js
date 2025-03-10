@@ -12,7 +12,15 @@ const userSchema = new mongoose.Schema(
     image: { filePath: { type: String } },
     access: {
       type: String,
-      enum: ["SuperAdmin", "Admin", "Sales", "HR", "Marketing", "Web-Dev"],
+      enum: [
+        "SuperAdmin",
+        "Admin",
+        "Sales",
+        "HR",
+        "Marketing",
+        "Web-Dev",
+        "SEO",
+      ],
     },
     permissions: {
       invoice: { type: [String], default: [] },

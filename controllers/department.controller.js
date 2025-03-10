@@ -180,6 +180,30 @@ const addEmployeeToDepartment = async (req, res) => {
     });
   }
 };
+const getEmployeesByDepartment = async (req, res) => {
+  try {
+    const userDepartment = req.user.access; // Access level
+    const userCompany = req.user.companyId;
+   
+
+    // Fetch all users based on access level and companyId, and include the 'name' field
+    const users = await companyModel.User.find({
+      access: userDepartment,
+      companyId: userCompany,
+     
+    })// Specify the fields to be returned
+
+    // Return the list of users
+    res.send(users);
+  } catch (error) {
+    console.error("Error fetching employees by department:", error);
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred while fetching employees by department",
+    });
+  }
+};
+
 
 // Get all employees
 const getAllEmployees = async (req, res) => {
@@ -522,6 +546,7 @@ const department = {
   updateEmployee,
   deleteEmployee,
   getSalesEmployees,
+  getEmployeesByDepartment,
 };
 
 module.exports = department;
