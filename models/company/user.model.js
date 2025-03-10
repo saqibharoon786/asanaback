@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema(
         "HR",
         "Marketing",
         "Web-Dev",
-        "SEO",
+        "Seo",
       ],
     },
     permissions: {
